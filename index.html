@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>منصة مستعرض الملفات</title>
-  <!-- استدعاء خط Tajawal من Google Fonts -->
+  <!-- خط أنيق من Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- مكتبة الأيقونات Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body {
-      font-family: 'Tajawal', sans-serif; /* الخط الجديد */
+      font-family: 'Tajawal', sans-serif;
       background: linear-gradient(135deg, #1e3c72, #2a5298); /* تدرج أنيق */
       color: #333;
       padding: 20px;
@@ -23,6 +24,18 @@
       font-size: 30px;
       font-weight: 700;
       letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    header .subtitle {
+      display: inline-block;
+      background: #ffffff22; /* خلفية شفافة مزخرفة */
+      color: #f0f0f0;
+      font-size: 18px;
+      font-weight: 400;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid #ffffff55;
+      letter-spacing: 0.5px;
     }
     .file-types, .file-list {
       max-width: 700px;
@@ -43,7 +56,6 @@
       background-color: #fdfdfd;
       color: #333;
       transition: 0.3s;
-      font-family: 'Tajawal', sans-serif;
     }
     select:hover {
       border-color: #2a5298;
@@ -61,7 +73,6 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      font-family: 'Tajawal', sans-serif;
     }
     .actions {
       display: flex;
@@ -74,7 +85,6 @@
       font-size: 18px;
       color: #1e3c72;
       transition: 0.3s;
-      font-family: 'Tajawal', sans-serif;
     }
     .actions button:hover {
       color: #2a5298;
@@ -107,6 +117,7 @@
 <body>
   <header>
     <h1>منصة مستعرض المستندات والملفات التعليمية لمدرسة تحفيظ القرآن بالبجادية</h1>
+    <p class="subtitle">خاص بمعلمي المدرسة</p>
   </header>
 
   <div class="file-types">
@@ -132,5 +143,98 @@
   </div>
 
   <div id="previewArea"></div>
+
+  <script>
+    const files = {
+      pdf: ["files/lesson1.pdf", "files/homework.pdf"],
+      word: ["files/plan.docx", "files/report.docx"],
+      excel: ["files/grades.xlsx", "files/schedule.xlsx"],
+      ppt: ["files/presentation.pptx", "files/lecture.pptx"],
+      image: ["files/class.jpg", "files/diagram.png"],
+      video: ["files/lesson.mp4", "files/clip.mov"],
+      audio: ["files/record.mp3", "files/song.mp3"],
+      text: ["files/notes.txt", "files/instructions.txt"],
+      html: ["files/page.html", "files/interactive.html"],
+      all: []
+    };
+    files.all = Object.values(files).flat().filter(f => typeof f === "string");
+
+    function getPreviewElement(file) {
+      const ext = file.split('.').pop().toLowerCase();
+      const encoded = encodeURIComponent(file);
+
+      if (ext === "pdf") {
+        return `<iframe src="${file}"></iframe>`;
+      } else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) {
+        return `<iframe src="https://docs.google.com/gview?url=${encoded}&embedded=true"></iframe>`;
+      } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+        return `<img src="${file}" alt="preview">`;
+      } else if (["html", "htm"].includes(ext)) {
+        return `<iframe src="${file}"></iframe>`;
+      } else if (["mp4", "mov", "webm"].includes(ext)) {
+        return `<video controls src="${file}"></video>`;
+      } else if (["mp3", "wav", "ogg"].includes(ext)) {
+        return `<audio controls src="${file}"></audio>`;
+      } else if (["txt"].includes(ext)) {
+        return `<iframe src="${file}"></iframe>`;
+      } else {
+        return `<p>لا يمكن معاينة هذا النوع من الملفات مباشرة</p>`;
+      }
+    }
+
+    function renderFiles(type) {
+      const fileDisplay = document.getElementById("fileDisplay");
+      fileDisplay.innerHTML = "";
+      if (files[type].length === 0) {
+        fileDisplay.innerHTML = "<li>لا توجد ملفات</li>";
+      } else {
+        files[type].forEach(file => {
+          const li = document.createElement("li");
+          li.textContent = file;
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const previewBtn = document.createElement("button");
+          previewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+          previewBtn.onclick = () => {
+            document.getElementById("previewArea").style.display = "block";
+            document.getElementById("previewArea").innerHTML = getPreviewElement(file);
+          };
+
+          const shareBtn = document.createElement("button");
+          shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
+          shareBtn.onclick = async () => {
+            try {
+              await navigator.clipboard.writeText(file);
+              alert("تم نسخ رابط الملف إلى الحافظة: " + file);
+            } catch (err) {
+              alert("تعذر نسخ الرابط");
+            }
+          };
+
+          const downloadBtn = document.createElement("button");
+          downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+          downloadBtn.onclick = () => {
+            const link = document.createElement("a");
+            link.href = file;
+            link.download = file;
+            link.click();
+          };
+
+          actions.appendChild(previewBtn);
+          actions.appendChild(shareBtn);
+          actions.appendChild(downloadBtn);
+
+          li.appendChild(actions);
+          fileDisplay.appendChild(li);
+        });
+      }
+    }
+
+    document.getElementById("fileType").addEventListener("change", function () {
+      renderFiles(this.value);
+    });
+  </script>
 </body>
 </html>
