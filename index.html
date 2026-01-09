@@ -4,128 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منصة مستعرض الملفات</title>
-  <!-- خط أنيق من Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- مكتبة الأيقونات Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: #333;
-      padding: 20px;
-      min-height: 100vh;
-      margin: 0;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    header h1 {
-      color: #fff;
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    header .subtitle {
-      display: inline-block;
-      background: #ffffff22;
-      color: #f0f0f0;
-      font-size: 16px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid #ffffff55;
-    }
-    .file-types, .file-list {
-      max-width: 700px;
-      margin: auto;
-      background: #ffffffee;
-      backdrop-filter: blur(6px);
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-    select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      background-color: #fdfdfd;
-      color: #333;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      background-color: #f9f9f9;
-      margin: 6px 0;
-      padding: 10px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 6px;
-    }
-    .actions button {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 18px;
-      color: #1e3c72;
-      transition: 0.3s;
-    }
-    .actions button:hover {
-      color: #2a5298;
-    }
-    #previewArea {
-      width: 100%;
-      height: 80vh; /* يأخذ معظم الشاشة */
-      margin-top: 20px;
-      background-color: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      display: none;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-    #previewArea iframe, 
-    #previewArea video, 
-    #previewArea audio {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    #previewArea img {
-      max-width: 100%;
-      max-height: 100%;
-      display: block;
-      margin: auto;
-    }
-
-    /* 📱 تحسين العرض على الهواتف */
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 20px;
-      }
-      header .subtitle {
-        font-size: 14px;
-        padding: 4px 10px;
-      }
-      .actions button {
-        font-size: 16px;
-      }
-      #previewArea {
-        height: 70vh;
-      }
-    }
+    body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg,#1e3c72,#2a5298); color:#333; padding:20px; }
+    header { text-align:center; margin-bottom:20px; }
+    header h1 { color:#fff; font-size:24px; margin-bottom:8px; }
+    header .subtitle { background:#ffffff22; color:#f0f0f0; padding:6px 14px; border-radius:20px; border:1px solid #ffffff55; }
+    .file-list { max-width:700px; margin:auto; background:#ffffffee; padding:16px; border-radius:12px; }
+    li { background:#f9f9f9; margin:6px 0; padding:10px; border-radius:8px; }
+    #previewArea { width:100%; height:70vh; margin-top:20px; background:#fff; border-radius:12px; display:none; }
+    #previewArea iframe, #previewArea video, #previewArea audio { width:100%; height:100%; border:none; }
+    #previewArea img { max-width:100%; max-height:100%; display:block; margin:auto; }
   </style>
 </head>
 <body>
@@ -134,122 +23,50 @@
     <p class="subtitle">خاص بمعلمي المدرسة</p>
   </header>
 
-  <div class="file-types">
-    <select id="fileType">
-      <option value="all">✨ عرض الكل</option>
-      <option value="pdf">📄 ملفات PDF</option>
-      <option value="word">📝 مستندات Word</option>
-      <option value="excel">📊 جداول Excel</option>
-      <option value="ppt">🎥 عروض PowerPoint</option>
-      <option value="image">🖼️ ملفات الصور</option>
-      <option value="video">🎬 ملفات الفيديو</option>
-      <option value="audio">🔊 ملفات الصوت</option>
-      <option value="text">📑 ملفات نصية</option>
-      <option value="html">🌐 ملفات HTML</option>
-    </select>
-  </div>
+  <!-- زر رفع الملفات -->
+  <input type="file" id="fileInput" multiple style="margin:20px auto; display:block;">
 
   <div class="file-list">
     <h3>قائمة الملفات:</h3>
-    <ul id="fileDisplay">
-      <li>لا توجد ملفات حالياً</li>
-    </ul>
+    <ul id="fileDisplay"><li>لم يتم رفع ملفات بعد</li></ul>
   </div>
 
   <div id="previewArea"></div>
 
   <script>
-    const files = {
-      pdf: [],
-      word: [],
-      excel: [],
-      ppt: [],
-      image: [],
-      video: [],
-      audio: [],
-      text: [],
-      html: [],
-      all: []
-    };
+    const fileInput = document.getElementById("fileInput");
+    const fileDisplay = document.getElementById("fileDisplay");
+    const previewArea = document.getElementById("previewArea");
 
-    function getPreviewElement(file) {
-      const ext = file.split('.').pop().toLowerCase();
-      const encoded = encodeURIComponent(location.origin + "/" + file);
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (ext === "pdf" || ["doc","docx","xls","xlsx","ppt","pptx"].includes(ext)) {
-        if (isMobile) {
-          return `<iframe src="https://docs.google.com/gview?url=${encoded}&embedded=true" style="width:100%;height:100%;"></iframe>`;
-        } else {
-          return `<iframe src="${file}" style="width:100%;height:100%;"></iframe>`;
-        }
-      } else if (["jpg","jpeg","png","gif"].includes(ext)) {
-        return `<img src="${file}" alt="preview">`;
-      } else if (["html","htm"].includes(ext)) {
-        return `<iframe src="${file}"></iframe>`;
-      } else if (["mp4","mov","webm"].includes(ext)) {
-        return `<video controls src="${file}"></video>`;
-      } else if (["mp3","wav","ogg"].includes(ext)) {
-        return `<audio controls src="${file}"></audio>`;
-      } else if (["txt"].includes(ext)) {
-        return `<iframe src="${file}"></iframe>`;
-      } else {
-        return `<p>لا يمكن معاينة هذا النوع من الملفات مباشرة</p>`;
-      }
-    }
-
-    function renderFiles(type) {
-      const fileDisplay = document.getElementById("fileDisplay");
+    fileInput.addEventListener("change", () => {
       fileDisplay.innerHTML = "";
-      if (files[type].length === 0) {
-        fileDisplay.innerHTML = "<li>لا توجد ملفات</li>";
-      } else {
-        files[type].forEach(file => {
-          const li = document.createElement("li");
-          li.textContent = file;
+      Array.from(fileInput.files).forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = file.name;
 
-          const actions = document.createElement("div");
-          actions.className = "actions";
+        const previewBtn = document.createElement("button");
+        previewBtn.textContent = "👁️ معاينة";
+        previewBtn.onclick = () => {
+          const url = URL.createObjectURL(file);
+          const ext = file.name.split('.').pop().toLowerCase();
+          previewArea.style.display = "block";
 
-          const previewBtn = document.createElement("button");
-          previewBtn.innerHTML = '<i class="fas fa-eye"></i>';
-          previewBtn.onclick = () => {
-            document.getElementById("previewArea").style.display = "block";
-            document.getElementById("previewArea").innerHTML = getPreviewElement(file);
-          };
+          if (ext === "pdf") {
+            previewArea.innerHTML = `<iframe src="${url}"></iframe>`;
+          } else if (["jpg","jpeg","png","gif"].includes(ext)) {
+            previewArea.innerHTML = `<img src="${url}" alt="preview">`;
+          } else if (["mp4","mov","webm"].includes(ext)) {
+            previewArea.innerHTML = `<video controls src="${url}"></video>`;
+          } else if (["mp3","wav","ogg"].includes(ext)) {
+            previewArea.innerHTML = `<audio controls src="${url}"></audio>`;
+          } else {
+            previewArea.innerHTML = `<p>لا يمكن معاينة هذا النوع من الملفات مباشرة</p>`;
+          }
+        };
 
-          const shareBtn = document.createElement("button");
-          shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
-          shareBtn.onclick = async () => {
-            try {
-              await navigator.clipboard.writeText(file);
-              alert("تم نسخ رابط الملف إلى الحافظة: " + file);
-            } catch (err) {
-              alert("تعذر نسخ الرابط");
-            }
-          };
-
-          const downloadBtn = document.createElement("button");
-          downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
-          downloadBtn.onclick = () => {
-            const link = document.createElement("a");
-            link.href = file;
-            link.download = file;
-            link.click();
-          };
-
-          actions.appendChild(previewBtn);
-          actions.appendChild(shareBtn);
-          actions.appendChild(downloadBtn);
-
-          li.appendChild(actions);
-          fileDisplay.appendChild(li);
-        });
-      }
-    }
-    // عند تغيير نوع الملف من القائمة
-    document.getElementById("fileType").addEventListener("change", function () {
-      renderFiles(this.value);
+        li.appendChild(previewBtn);
+        fileDisplay.appendChild(li);
+      });
     });
   </script>
 </body>
