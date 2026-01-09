@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- مهم للهواتف -->
   <title>منصة مستعرض الملفات</title>
   <!-- خط أنيق من Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
@@ -10,55 +11,49 @@
   <style>
     body {
       font-family: 'Tajawal', sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298); /* تدرج أنيق */
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
       color: #333;
       padding: 20px;
       min-height: 100vh;
+      margin: 0;
     }
     header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     header h1 {
       color: #fff;
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 700;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     header .subtitle {
       display: inline-block;
-      background: #ffffff22; /* خلفية شفافة مزخرفة */
+      background: #ffffff22;
       color: #f0f0f0;
-      font-size: 18px;
-      font-weight: 400;
-      padding: 6px 16px;
+      font-size: 16px;
+      padding: 6px 14px;
       border-radius: 20px;
       border: 1px solid #ffffff55;
-      letter-spacing: 0.5px;
     }
     .file-types, .file-list {
       max-width: 700px;
       margin: auto;
       background: #ffffffee;
       backdrop-filter: blur(6px);
-      padding: 20px;
-      border-radius: 14px;
+      padding: 16px;
+      border-radius: 12px;
       margin-bottom: 20px;
       box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     select {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 16px;
       background-color: #fdfdfd;
       color: #333;
-      transition: 0.3s;
-    }
-    select:hover {
-      border-color: #2a5298;
     }
     ul {
       list-style: none;
@@ -66,17 +61,19 @@
     }
     li {
       background-color: #f9f9f9;
-      margin: 8px 0;
-      padding: 12px;
+      margin: 6px 0;
+      padding: 10px;
       border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap; /* مهم للهواتف */
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     .actions {
       display: flex;
-      gap: 14px;
+      gap: 12px;
+      margin-top: 6px;
     }
     .actions button {
       border: none;
@@ -91,7 +88,7 @@
     }
     #previewArea {
       width: 100%;
-      height: 600px;
+      height: 400px; /* أصغر للهواتف */
       margin-top: 20px;
       background-color: #fff;
       border-radius: 12px;
@@ -111,6 +108,23 @@
       max-height: 100%;
       display: block;
       margin: auto;
+    }
+
+    /* 📱 تحسين العرض على الهواتف */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 22px;
+      }
+      header .subtitle {
+        font-size: 14px;
+        padding: 4px 10px;
+      }
+      .actions button {
+        font-size: 16px;
+      }
+      #previewArea {
+        height: 250px;
+      }
     }
   </style>
 </head>
@@ -212,8 +226,7 @@
               alert("تعذر نسخ الرابط");
             }
           };
-
-          const downloadBtn = document.createElement("button");
+const downloadBtn = document.createElement("button");
           downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
           downloadBtn.onclick = () => {
             const link = document.createElement("a");
