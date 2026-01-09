@@ -546,7 +546,7 @@
         const filterElement = document.getElementById("file-filter");
         const searchElement = document.getElementById("search-input");
         const darkModeToggle = document.getElementById("dark-mode-toggle");
-        const defaultFile = "تعليمات.pdf"; // اسم الملف الافتراضي إذا كان موجوداً في مجلد 'documents'
+        const defaultFile = "تعليمات.pdf"; // اسم الملف الافتراضي إذا كان موجوداً في مجلد 'files'
 
         // الملفات التي يجب تثبيتها في أعلى القائمة (تظهر أولاً)
         const pinnedFiles = [
@@ -637,7 +637,7 @@
         async function fetchClassFiles(folderPath) {
             const username = window.location.hostname.split(".")[0];
             const repo = window.location.pathname.split("/")[1];
-            const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/documents/${encodeURIComponent(folderPath)}`;
+            const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/files/${encodeURIComponent(folderPath)}`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -674,7 +674,7 @@
             const foldersData = await Promise.all(folderPromises); // جلب جميع المجلدات في نفس اللحظة
             foldersData.forEach(files => allFilesData.push(...files));
 
-            // جلب الملفات العامة الموجودة مباشرة في مجلد 'documents'
+            // جلب الملفات العامة الموجودة مباشرة في مجلد 'files'
             const generalFiles = await fetchClassFiles("");
             const generalFilesData = generalFiles.filter(file => !classFolders.includes(file.name));
 
@@ -941,10 +941,10 @@
           const repo = window.location.pathname.split("/")[1];
           
           // الرابط النسبي (يعمل داخل الموقع للتحميل والعرض المباشر)
-          const relativeUrl = `documents/${filepath}`;
+          const relativeUrl = `files/${filepath}`;
           
           // الرابط الكامل (مطلوب للعارضات الخارجية مثل جوجل ومايكروسوفت)
-          const absoluteUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/documents/${encodeURIComponent(filepath)}`;
+          const absoluteUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/files/${encodeURIComponent(filepath)}`;
           
           // التحقق هل الجهاز موبايل؟ (لإصلاح مشكلة PDF)
           const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1024,4 +1024,3 @@
     </script>
   </body>
 </html>
-
