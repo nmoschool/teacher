@@ -39,19 +39,6 @@
       font-size:18px; color:#1e3c72; transition:0.3s;
     }
     .actions button:hover { color:#2a5298; }
-    #previewArea {
-      width:100%; height:70vh; margin-top:20px;
-      background:#fff; border-radius:12px;
-      display:none; overflow:hidden;
-      box-shadow:0 6px 16px rgba(0,0,0,0.15);
-    }
-    #previewArea iframe, #previewArea video, #previewArea audio {
-      width:100%; height:100%; border:none;
-    }
-    #previewArea img {
-      max-width:100%; max-height:100%;
-      display:block; margin:auto;
-    }
   </style>
 </head>
 <body>
@@ -68,12 +55,9 @@
     <ul id="fileDisplay"><li>لم يتم رفع ملفات بعد</li></ul>
   </div>
 
-  <div id="previewArea"></div>
-
   <script>
     const fileInput = document.getElementById("fileInput");
     const fileDisplay = document.getElementById("fileDisplay");
-    const previewArea = document.getElementById("previewArea");
 
     fileInput.addEventListener("change", () => {
       fileDisplay.innerHTML = "";
@@ -84,24 +68,17 @@
         const actions = document.createElement("div");
         actions.className = "actions";
 
-        // زر المعاينة
+        // زر المعاينة في تطبيق خارجي
         const previewBtn = document.createElement("button");
         previewBtn.innerHTML = '<i class="fas fa-eye"></i>';
         previewBtn.onclick = () => {
           const url = URL.createObjectURL(file);
           const ext = file.name.split('.').pop().toLowerCase();
-          previewArea.style.display = "block";
-
-          if (ext === "pdf") {
-            previewArea.innerHTML = `<iframe src="${url}"></iframe>`;
-          } else if (["jpg","jpeg","png","gif"].includes(ext)) {
-            previewArea.innerHTML = `<img src="${url}" alt="preview">`;
-          } else if (["mp4","mov","webm"].includes(ext)) {
-            previewArea.innerHTML = `<video controls src="${url}"></video>`;
-          } else if (["mp3","wav","ogg"].includes(ext)) {
-            previewArea.innerHTML = `<audio controls src="${url}"></audio>`;
+          if (["pdf","doc","docx","xls","xlsx","ppt","pptx"].includes(ext)) {
+            const viewerURL = `https://docs.google.com/gview?url=${url}&embedded=true`;
+            window.open(viewerURL, "_blank");
           } else {
-            previewArea.innerHTML = `<p>لا يمكن معاينة هذا النوع من الملفات مباشرة</p>`;
+            window.open(url, "_blank");
           }
         };
 
@@ -115,8 +92,22 @@
           link.click();
         };
 
+        // زر المشاركة (نسخ الرابط)
+        const shareBtn = document.createElement("button");
+        shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
+        shareBtn.onclick = async () => {
+          try {
+            const url = URL.createObjectURL(file);
+            await navigator.clipboard.writeText(url);
+            alert("تم نسخ رابط الملف إلى الحافظة");
+          } catch (err) {
+            alert("تعذر نسخ الرابط");
+          }
+        };
+
         actions.appendChild(previewBtn);
         actions.appendChild(downloadBtn);
+        actions.appendChild(shareBtn);
         li.appendChild(actions);
         fileDisplay.appendChild(li);
       });
