@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- مهم للهواتف -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منصة مستعرض الملفات</title>
   <!-- خط أنيق من Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
     }
     header h1 {
       color: #fff;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       margin-bottom: 8px;
     }
@@ -67,7 +67,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap; /* مهم للهواتف */
+      flex-wrap: wrap;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     .actions {
@@ -88,7 +88,7 @@
     }
     #previewArea {
       width: 100%;
-      height: 400px; /* أصغر للهواتف */
+      height: 80vh; /* يأخذ معظم الشاشة */
       margin-top: 20px;
       background-color: #fff;
       border-radius: 12px;
@@ -113,7 +113,7 @@
     /* 📱 تحسين العرض على الهواتف */
     @media (max-width: 600px) {
       header h1 {
-        font-size: 22px;
+        font-size: 20px;
       }
       header .subtitle {
         font-size: 14px;
@@ -123,7 +123,7 @@
         font-size: 16px;
       }
       #previewArea {
-        height: 250px;
+        height: 70vh;
       }
     }
   </style>
@@ -152,7 +152,7 @@
   <div class="file-list">
     <h3>قائمة الملفات:</h3>
     <ul id="fileDisplay">
-      <li>يرجى اختيار نوع الملف لعرض الملفات</li>
+      <li>لا توجد ملفات حالياً</li>
     </ul>
   </div>
 
@@ -160,34 +160,36 @@
 
   <script>
     const files = {
-      pdf: ["files/lesson1.pdf", "files/homework.pdf"],
-      word: ["files/plan.docx", "files/report.docx"],
-      excel: ["files/grades.xlsx", "files/schedule.xlsx"],
-      ppt: ["files/presentation.pptx", "files/lecture.pptx"],
-      image: ["files/class.jpg", "files/diagram.png"],
-      video: ["files/lesson.mp4", "files/clip.mov"],
-      audio: ["files/record.mp3", "files/song.mp3"],
-      text: ["files/notes.txt", "files/instructions.txt"],
-      html: ["files/page.html", "files/interactive.html"],
+      pdf: [],
+      word: [],
+      excel: [],
+      ppt: [],
+      image: [],
+      video: [],
+      audio: [],
+      text: [],
+      html: [],
       all: []
     };
-    files.all = Object.values(files).flat().filter(f => typeof f === "string");
 
     function getPreviewElement(file) {
       const ext = file.split('.').pop().toLowerCase();
-      const encoded = encodeURIComponent(file);
+      const encoded = encodeURIComponent(location.origin + "/" + file);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      if (ext === "pdf") {
-        return `<iframe src="${file}"></iframe>`;
-      } else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) {
-        return `<iframe src="https://docs.google.com/gview?url=${encoded}&embedded=true"></iframe>`;
-      } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+      if (ext === "pdf" || ["doc","docx","xls","xlsx","ppt","pptx"].includes(ext)) {
+        if (isMobile) {
+          return `<iframe src="https://docs.google.com/gview?url=${encoded}&embedded=true" style="width:100%;height:100%;"></iframe>`;
+        } else {
+          return `<iframe src="${file}" style="width:100%;height:100%;"></iframe>`;
+        }
+      } else if (["jpg","jpeg","png","gif"].includes(ext)) {
         return `<img src="${file}" alt="preview">`;
-      } else if (["html", "htm"].includes(ext)) {
+      } else if (["html","htm"].includes(ext)) {
         return `<iframe src="${file}"></iframe>`;
-      } else if (["mp4", "mov", "webm"].includes(ext)) {
+      } else if (["mp4","mov","webm"].includes(ext)) {
         return `<video controls src="${file}"></video>`;
-      } else if (["mp3", "wav", "ogg"].includes(ext)) {
+      } else if (["mp3","wav","ogg"].includes(ext)) {
         return `<audio controls src="${file}"></audio>`;
       } else if (["txt"].includes(ext)) {
         return `<iframe src="${file}"></iframe>`;
@@ -226,7 +228,8 @@
               alert("تعذر نسخ الرابط");
             }
           };
-const downloadBtn = document.createElement("button");
+
+          const downloadBtn = document.createElement("button");
           downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
           downloadBtn.onclick = () => {
             const link = document.createElement("a");
@@ -244,7 +247,7 @@ const downloadBtn = document.createElement("button");
         });
       }
     }
-
+    // عند تغيير نوع الملف من القائمة
     document.getElementById("fileType").addEventListener("change", function () {
       renderFiles(this.value);
     });
