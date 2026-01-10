@@ -12,8 +12,8 @@
 
     <style>
       :root {
-        --primary-color: #0b1528; /* الكحلي الغامق */
-        --accent-color: #c5a059;  /* الذهبي */
+        --primary-color: #0b1528; /* الكحلي الغامق من الصورة */
+        --accent-color: #c5a059;  /* الذهبي من الصورة */
         --bg-color: #f8fafc;
         --panel-bg: #ffffff;
         --border-color: #e2e8f0;
@@ -22,7 +22,7 @@
         --hover-bg: #f1f5f9;
         --shadow-elevation: 0 4px 20px rgba(0, 0, 0, 0.08);
         --fav-color: #f59e0b;
-        /* ألوان الأيقونات */
+        /* ألوان الامتدادات */
         --icon-pdf: #e11d48;
         --icon-word: #2563eb;
         --icon-excel: #16a34a;
@@ -51,6 +51,7 @@
 
       .container { display: flex; width: 100%; flex-grow: 1; }
 
+      /* Sidebar Style */
       .sidebar {
         width: 380px;
         background-color: var(--panel-bg);
@@ -101,9 +102,18 @@
         color: var(--text-color);
         margin-bottom: 12px;
         font-family: inherit;
+        transition: 0.3s;
       }
 
-      .folder-header { background: var(--hover-bg); cursor: pointer; }
+      #search-input:focus {
+        border-color: var(--accent-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
+      }
+
+      /* Folder and File Styles */
+      .folder-header { background: var(--hover-bg); cursor: pointer; transition: 0.3s; }
+      .folder-header:hover { background: var(--border-color); }
       .folder-title { padding: 15px; display: flex; align-items: center; font-weight: 700; color: var(--primary-color); }
       body.dark-mode .folder-title { color: var(--accent-color); }
 
@@ -116,6 +126,7 @@
       .fav-btn { color: #cbd5e1; cursor: pointer; transition: 0.2s; padding: 5px; }
       .fav-btn.active { color: var(--fav-color); }
 
+      /* Main View */
       .main-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; }
       .viewer-header {
         display: flex;
@@ -139,11 +150,12 @@
 
       iframe { width: 100%; height: 100%; border: none; }
 
-      .no-results { padding: 20px; text-align: center; color: var(--light-text); }
+      .no-results { padding: 40px; text-align: center; color: var(--light-text); }
 
       @media (max-width: 768px) {
         .container { flex-direction: column; }
         .sidebar { width: 100%; height: auto; position: static; }
+        #viewer { min-height: 500px; }
       }
     </style>
   </head>
@@ -169,16 +181,15 @@
             <option value="xls">جداول Excel</option>
             <option value="ppt">عروض PowerPoint</option>
             <option value="img">ملفات الصور</option>
-            <option value="video">ملفات الفيديو</option>
-            <option value="audio">ملفات الصوت</option>
-            <option value="txt">ملفات نصية</option>
-            <option value="html">ملفات HTML</option>
+            <option value="video">فيديو</option>
+            <option value="audio">صوت</option>
           </select>
         </div>
 
-        <div style="overflow-y: auto; flex-grow: 1;">
+        <div style="overflow-y: auto; flex-grow: 1;" id="sidebar-scroll">
           <table style="width:100%; border-collapse: collapse;">
-            <tbody id="file-list"></tbody>
+            <tbody id="file-list">
+                </tbody>
           </table>
         </div>
       </aside>
@@ -194,7 +205,7 @@
           </a>
         </div>
         <div id="viewer">
-            <div class="no-results">الرجاء اختيار ملف من القائمة لعرضه</div>
+            <div class="no-results">اختر ملفاً لعرضه هنا</div>
         </div>
       </main>
     </div>
@@ -205,136 +216,139 @@
         const viewer = document.getElementById("viewer");
         const searchInput = document.getElementById("search-input");
         const fileFilter = document.getElementById("file-filter");
-        
-        let favorites = JSON.parse(localStorage.getItem('my-favs')) || [];
-        const classFolders = ["أول ابتدائي", "ثاني ابتدائي", "ثالث ابتدائي", "رابع ابتدائي", "خامس ابتدائي", "سادس ابتدائي"];
+        const downloadBtn = document.getElementById("download-btn");
 
-        // --- جلب الملفات الحقيقية من GitHub ---
-        async function fetchFiles(folder) {
-            const username = window.location.hostname.split(".")[0];
-            const repo = window.location.pathname.split("/")[1];
-            const url = `https://api.github.com/repos/${username}/${repo}/contents/files/${encodeURIComponent(folder)}`;
-            
-            try {
-                const response = await fetch(url);
-                if (!response.ok) return [];
-                const data = await response.json();
-                return data.filter(item => item.type === "file");
-            } catch (e) { return []; }
-        }
+        const config = {
+          username: "nmoschool",
+          repo: "teacher",
+          basePath: "files"
+        };
 
-        async function init() {
-            fileListElement.innerHTML = '<div class="no-results">جاري جلب الملفات...</div>';
-            const allPromises = classFolders.map(async folder => {
-                const files = await fetchFiles(folder);
-                return { folder, files };
-            });
+        let favorites = JSON.parse(localStorage.getItem('teacher-favs')) || [];
 
-            const results = await Promise.all(allPromises);
+        async function fetchFolders() {
+          const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/${config.basePath}`;
+          try {
+            const res = await fetch(url);
+            const items = await res.json();
             fileListElement.innerHTML = "";
-            
-            results.forEach(res => {
-                if(res.files.length > 0) renderFolder(res.folder, res.files);
-            });
-            
-            if(fileListElement.innerHTML === "") {
-                fileListElement.innerHTML = '<div class="no-results">لا توجد ملفات متوفرة حالياً</div>';
+            for (let item of items) {
+              if (item.type === "dir") {
+                await renderFolder(item.name, item.path);
+              }
             }
+          } catch (e) {
+            fileListElement.innerHTML = '<div class="no-results">فشل الاتصال بـ GitHub</div>';
+          }
         }
 
-        function renderFolder(name, files) {
-            const header = document.createElement("tr");
-            header.className = "folder-header";
-            header.innerHTML = `<td colspan="3"><div class="folder-title"><i class="fa-solid fa-chevron-left arrow-icon"></i> <i class="fa-solid fa-folder-closed" style="margin-left:10px; color:var(--accent-color)"></i> ${name}</div></td>`;
-            
-            header.onclick = () => {
-                const isOpen = header.dataset.open === "true";
-                header.dataset.open = !isOpen;
-                header.querySelector(".arrow-icon").style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
-                document.querySelectorAll(`.file-row[data-folder="${name}"]`).forEach(r => r.style.display = isOpen ? "none" : "table-row");
-            };
-            fileListElement.appendChild(header);
+        async function renderFolder(folderName, path) {
+          const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/${path}`;
+          const res = await fetch(url);
+          const files = await res.json();
 
-            files.forEach(file => addFileRow(file.name, name, file.download_url));
+          if (files.length === 0) return;
+
+          const header = document.createElement("tr");
+          header.className = "folder-header";
+          header.innerHTML = `
+            <td colspan="3">
+              <div class="folder-title">
+                <i class="fa-solid fa-chevron-left arrow-icon"></i>
+                <i class="fa-solid fa-folder-closed" style="margin-left:10px; color:var(--accent-color)"></i>
+                ${folderName}
+              </div>
+            </td>`;
+          
+          header.onclick = () => {
+            const isOpen = header.dataset.open === "true";
+            header.dataset.open = !isOpen;
+            header.querySelector(".arrow-icon").style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
+            document.querySelectorAll(`.file-row[data-parent="${folderName}"]`).forEach(r => r.style.display = isOpen ? "none" : "table-row");
+          };
+          
+          fileListElement.appendChild(header);
+          files.forEach(file => {
+            if (file.type === "file") addFileRow(file, folderName);
+          });
         }
 
-        function addFileRow(fileName, folder, url) {
-            const ext = fileName.split('.').pop().toLowerCase();
-            const config = getFileConfig(ext);
-            const isFav = favorites.includes(fileName);
+        function addFileRow(file, folderName) {
+          const ext = file.name.split('.').pop().toLowerCase();
+          const fileConfig = getFileIcon(ext);
+          const isFav = favorites.includes(file.name);
 
-            const tr = document.createElement("tr");
-            tr.className = "file-row";
-            tr.dataset.folder = folder;
-            tr.dataset.type = config.type;
-            tr.dataset.name = fileName.toLowerCase();
-            tr.style.display = "none";
+          const tr = document.createElement("tr");
+          tr.className = "file-row";
+          tr.dataset.parent = folderName;
+          tr.dataset.type = fileConfig.type;
+          tr.dataset.name = file.name.toLowerCase();
+          tr.style.display = "none";
 
-            tr.innerHTML = `
-                <td style="padding:15px; width:40px;"><i class="fa-star ${isFav ? 'fa-solid active' : 'fa-regular'} fav-btn"></i></td>
-                <td style="padding:15px; font-size:0.95em;">${fileName.split('.')[0]}</td>
-                <td style="padding:15px; text-align:center; width:50px;"><i class="fa-solid ${config.icon}" style="color:${config.color}; font-size:1.4em;"></i></td>
-            `;
+          tr.innerHTML = `
+            <td style="padding:15px; width:40px;"><i class="fa-star ${isFav ? 'fa-solid active' : 'fa-regular'} fav-btn"></i></td>
+            <td style="padding:15px;">${file.name.split('.')[0]}</td>
+            <td style="padding:15px; text-align:center;"><i class="fa-solid ${fileConfig.icon}" style="color:${fileConfig.color}; font-size:1.4em;"></i></td>
+          `;
 
-            tr.querySelector(".fav-btn").onclick = (e) => {
-                e.stopPropagation();
-                if(favorites.includes(fileName)) favorites = favorites.filter(f => f !== fileName);
-                else favorites.push(fileName);
-                localStorage.setItem('my-favs', JSON.stringify(favorites));
-                e.target.classList.toggle('fa-solid'); e.target.classList.toggle('fa-regular'); e.target.classList.toggle('active');
-            };
+          tr.querySelector(".fav-btn").onclick = (e) => {
+            e.stopPropagation();
+            if(favorites.includes(file.name)) favorites = favorites.filter(f => f !== file.name);
+            else favorites.push(file.name);
+            localStorage.setItem('teacher-favs', JSON.stringify(favorites));
+            e.target.classList.toggle('fa-solid'); e.target.classList.toggle('fa-regular'); e.target.classList.toggle('active');
+          };
 
-            tr.onclick = () => {
-                document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
-                tr.classList.add('active');
-                displayFile(fileName, url, ext);
-            };
-            fileListElement.appendChild(tr);
+          tr.onclick = () => {
+            document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
+            tr.classList.add('active');
+            displayFile(file.name, file.download_url, ext);
+          };
+
+          fileListElement.appendChild(tr);
         }
 
-        function getFileConfig(ext) {
-            if (ext === 'pdf') return { icon: 'fa-file-pdf', color: 'var(--icon-pdf)', type: 'pdf' };
-            if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', color: 'var(--icon-word)', type: 'doc' };
-            if (['xls', 'xlsx'].includes(ext)) return { icon: 'fa-file-excel', color: 'var(--icon-excel)', type: 'xls' };
-            if (['ppt', 'pptx'].includes(ext)) return { icon: 'fa-file-powerpoint', color: 'var(--icon-ppt)', type: 'ppt' };
-            if (['png', 'jpg', 'jpeg'].includes(ext)) return { icon: 'fa-file-image', color: 'var(--accent-color)', type: 'img' };
-            if (['mp4', 'mov'].includes(ext)) return { icon: 'fa-file-video', color: 'var(--icon-media)', type: 'video' };
-            if (['mp3', 'wav'].includes(ext)) return { icon: 'fa-file-audio', color: 'var(--icon-media)', type: 'audio' };
-            if (ext === 'txt') return { icon: 'fa-file-lines', color: 'var(--light-text)', type: 'txt' };
-            return { icon: 'fa-file', color: 'gray', type: 'other' };
+        function getFileIcon(ext) {
+          if (ext === 'pdf') return { icon: 'fa-file-pdf', color: 'var(--icon-pdf)', type: 'pdf' };
+          if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', color: 'var(--icon-word)', type: 'doc' };
+          if (['xls', 'xlsx'].includes(ext)) return { icon: 'fa-file-excel', color: 'var(--icon-excel)', type: 'xls' };
+          if (['ppt', 'pptx'].includes(ext)) return { icon: 'fa-file-powerpoint', color: 'var(--icon-ppt)', type: 'ppt' };
+          if (['png', 'jpg', 'jpeg'].includes(ext)) return { icon: 'fa-file-image', color: 'var(--accent-color)', type: 'img' };
+          if (['mp4', 'mov'].includes(ext)) return { icon: 'fa-file-video', color: 'var(--icon-media)', type: 'video' };
+          if (['mp3', 'wav'].includes(ext)) return { icon: 'fa-file-audio', color: 'var(--icon-media)', type: 'audio' };
+          return { icon: 'fa-file', color: 'gray', type: 'other' };
         }
 
         function displayFile(name, url, ext) {
-            document.getElementById("current-file-name").innerText = name;
-            const downloadBtn = document.getElementById("download-btn");
-            downloadBtn.style.display = "inline-flex";
-            downloadBtn.href = url;
+          document.getElementById("current-file-name").innerText = name;
+          downloadBtn.style.display = "inline-flex";
+          downloadBtn.href = url;
 
-            if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
-                viewer.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}"></iframe>`;
-            } else {
-                viewer.innerHTML = `<iframe src="${url}"></iframe>`;
-            }
+          if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+            viewer.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}"></iframe>`;
+          } else {
+            viewer.innerHTML = `<iframe src="${url}"></iframe>`;
+          }
         }
 
-        function filter() {
-            const term = searchInput.value.toLowerCase();
-            const typeFilter = fileFilter.value;
-            document.querySelectorAll(".file-row").forEach(row => {
-                const name = row.dataset.name;
-                const type = row.dataset.type;
-                const isFav = favorites.some(f => f.toLowerCase().includes(name));
-                const matchSearch = name.includes(term);
-                const matchType = (typeFilter === "all") || (typeFilter === "fav" && favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop())) || (type === typeFilter);
-                row.style.display = (matchSearch && matchType) ? "table-row" : "none";
-            });
+        function applyFilter() {
+          const term = searchInput.value.toLowerCase();
+          const type = fileFilter.value;
+          document.querySelectorAll(".file-row").forEach(row => {
+            const name = row.dataset.name;
+            const fileType = row.dataset.type;
+            const isFav = favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop());
+            const matchesSearch = name.includes(term);
+            const matchesType = (type === "all") || (type === "fav" && favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop())) || (fileType === type);
+            row.style.display = (matchesSearch && matchesType) ? "table-row" : "none";
+          });
         }
 
-        searchInput.oninput = filter;
-        fileFilter.onchange = filter;
+        searchInput.oninput = applyFilter;
+        fileFilter.onchange = applyFilter;
         document.getElementById("dark-mode-toggle").onclick = () => document.body.classList.toggle("dark-mode");
 
-        init();
+        fetchFolders();
       });
     </script>
   </body>
