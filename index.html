@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Tajawal:wght@300;400;700&display=swap" rel="stylesheet" />
 
     <style>
-      /* --- 1. الهوية البصرية (مستوحاة من الصورة) --- */
       :root {
         --primary-color: #0b1528; /* الكحلي الغامق */
         --accent-color: #c5a059;  /* الذهبي */
@@ -52,7 +51,6 @@
 
       .container { display: flex; width: 100%; flex-grow: 1; }
 
-      /* --- Sidebar --- */
       .sidebar {
         width: 380px;
         background-color: var(--panel-bg);
@@ -103,49 +101,22 @@
         color: var(--text-color);
         margin-bottom: 12px;
         font-family: inherit;
-        transition: 0.3s;
       }
 
-      #search-input:focus, #file-filter:focus {
-        border-color: var(--accent-color);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
-        background-color: var(--panel-bg);
-      }
-
-      /* --- List & Folders --- */
-      .folder-header {
-        background: var(--hover-bg);
-        cursor: pointer;
-        user-select: none;
-      }
-
-      .folder-title {
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        font-weight: 700;
-        color: var(--primary-color);
-      }
-
+      .folder-header { background: var(--hover-bg); cursor: pointer; }
+      .folder-title { padding: 15px; display: flex; align-items: center; font-weight: 700; color: var(--primary-color); }
       body.dark-mode .folder-title { color: var(--accent-color); }
 
-      .arrow-icon {
-        transition: transform 0.3s ease;
-        margin-left: 10px;
-        font-size: 0.8em;
-      }
+      .arrow-icon { transition: transform 0.3s ease; margin-left: 10px; }
 
-      .file-row { transition: all 0.2s; }
+      .file-row { transition: all 0.2s; cursor: pointer; }
       .file-row:hover { background-color: var(--hover-bg); }
       .file-row.active { background-color: rgba(197, 160, 89, 0.1); border-right: 4px solid var(--accent-color); }
 
       .fav-btn { color: #cbd5e1; cursor: pointer; transition: 0.2s; padding: 5px; }
       .fav-btn.active { color: var(--fav-color); }
 
-      /* --- Main Content --- */
       .main-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; }
-
       .viewer-header {
         display: flex;
         justify-content: space-between;
@@ -168,10 +139,11 @@
 
       iframe { width: 100%; height: 100%; border: none; }
 
+      .no-results { padding: 20px; text-align: center; color: var(--light-text); }
+
       @media (max-width: 768px) {
         .container { flex-direction: column; }
         .sidebar { width: 100%; height: auto; position: static; }
-        #viewer { min-height: 500px; }
       }
     </style>
   </head>
@@ -217,36 +189,110 @@
             <h2 id="current-file-name" style="margin:0; font-size: 1.3em;">ملفات وتعاميم مدرسة التحفيظ</h2>
             <small style="color:var(--accent-color); font-weight: bold;">برمجة: NMO</small>
           </div>
-          <a href="#" id="download-btn" style="display:none; background:var(--primary-color); color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight: bold; font-size: 0.9em;">
-            <i class="fa-solid fa-download"></i> تحميل الملف
+          <a href="#" id="download-btn" style="display:none; background:var(--primary-color); color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight: bold;">
+            <i class="fa-solid fa-download"></i> تحميل
           </a>
         </div>
-
         <div id="viewer">
-          <div style="text-align: center; color: var(--light-text);">
-            <i class="fa-solid fa-file-circle-question fa-4x" style="margin-bottom: 15px; opacity: 0.3;"></i>
-            <p>الرجاء اختيار ملف لعرضه</p>
-          </div>
+            <div class="no-results">الرجاء اختيار ملف من القائمة لعرضه</div>
         </div>
       </main>
     </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const fileList = document.getElementById("file-list");
+        const fileListElement = document.getElementById("file-list");
+        const viewer = document.getElementById("viewer");
         const searchInput = document.getElementById("search-input");
         const fileFilter = document.getElementById("file-filter");
-        const viewer = document.getElementById("viewer");
-        const downloadBtn = document.getElementById("download-btn");
         
         let favorites = JSON.parse(localStorage.getItem('my-favs')) || [];
-
-        // قائمة الفصول كما في الكود الأصلي
         const classFolders = ["أول ابتدائي", "ثاني ابتدائي", "ثالث ابتدائي", "رابع ابتدائي", "خامس ابتدائي", "سادس ابتدائي"];
 
-        // دالة تحديد الأيقونة واللون بناءً على الامتداد (كما في الصورة)
-        function getFileData(name) {
-            const ext = name.split('.').pop().toLowerCase();
+        // --- جلب الملفات الحقيقية من GitHub ---
+        async function fetchFiles(folder) {
+            const username = window.location.hostname.split(".")[0];
+            const repo = window.location.pathname.split("/")[1];
+            const url = `https://api.github.com/repos/${username}/${repo}/contents/files/${encodeURIComponent(folder)}`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return [];
+                const data = await response.json();
+                return data.filter(item => item.type === "file");
+            } catch (e) { return []; }
+        }
+
+        async function init() {
+            fileListElement.innerHTML = '<div class="no-results">جاري جلب الملفات...</div>';
+            const allPromises = classFolders.map(async folder => {
+                const files = await fetchFiles(folder);
+                return { folder, files };
+            });
+
+            const results = await Promise.all(allPromises);
+            fileListElement.innerHTML = "";
+            
+            results.forEach(res => {
+                if(res.files.length > 0) renderFolder(res.folder, res.files);
+            });
+            
+            if(fileListElement.innerHTML === "") {
+                fileListElement.innerHTML = '<div class="no-results">لا توجد ملفات متوفرة حالياً</div>';
+            }
+        }
+
+        function renderFolder(name, files) {
+            const header = document.createElement("tr");
+            header.className = "folder-header";
+            header.innerHTML = `<td colspan="3"><div class="folder-title"><i class="fa-solid fa-chevron-left arrow-icon"></i> <i class="fa-solid fa-folder-closed" style="margin-left:10px; color:var(--accent-color)"></i> ${name}</div></td>`;
+            
+            header.onclick = () => {
+                const isOpen = header.dataset.open === "true";
+                header.dataset.open = !isOpen;
+                header.querySelector(".arrow-icon").style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
+                document.querySelectorAll(`.file-row[data-folder="${name}"]`).forEach(r => r.style.display = isOpen ? "none" : "table-row");
+            };
+            fileListElement.appendChild(header);
+
+            files.forEach(file => addFileRow(file.name, name, file.download_url));
+        }
+
+        function addFileRow(fileName, folder, url) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            const config = getFileConfig(ext);
+            const isFav = favorites.includes(fileName);
+
+            const tr = document.createElement("tr");
+            tr.className = "file-row";
+            tr.dataset.folder = folder;
+            tr.dataset.type = config.type;
+            tr.dataset.name = fileName.toLowerCase();
+            tr.style.display = "none";
+
+            tr.innerHTML = `
+                <td style="padding:15px; width:40px;"><i class="fa-star ${isFav ? 'fa-solid active' : 'fa-regular'} fav-btn"></i></td>
+                <td style="padding:15px; font-size:0.95em;">${fileName.split('.')[0]}</td>
+                <td style="padding:15px; text-align:center; width:50px;"><i class="fa-solid ${config.icon}" style="color:${config.color}; font-size:1.4em;"></i></td>
+            `;
+
+            tr.querySelector(".fav-btn").onclick = (e) => {
+                e.stopPropagation();
+                if(favorites.includes(fileName)) favorites = favorites.filter(f => f !== fileName);
+                else favorites.push(fileName);
+                localStorage.setItem('my-favs', JSON.stringify(favorites));
+                e.target.classList.toggle('fa-solid'); e.target.classList.toggle('fa-regular'); e.target.classList.toggle('active');
+            };
+
+            tr.onclick = () => {
+                document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
+                tr.classList.add('active');
+                displayFile(fileName, url, ext);
+            };
+            fileListElement.appendChild(tr);
+        }
+
+        function getFileConfig(ext) {
             if (ext === 'pdf') return { icon: 'fa-file-pdf', color: 'var(--icon-pdf)', type: 'pdf' };
             if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', color: 'var(--icon-word)', type: 'doc' };
             if (['xls', 'xlsx'].includes(ext)) return { icon: 'fa-file-excel', color: 'var(--icon-excel)', type: 'xls' };
@@ -255,132 +301,42 @@
             if (['mp4', 'mov'].includes(ext)) return { icon: 'fa-file-video', color: 'var(--icon-media)', type: 'video' };
             if (['mp3', 'wav'].includes(ext)) return { icon: 'fa-file-audio', color: 'var(--icon-media)', type: 'audio' };
             if (ext === 'txt') return { icon: 'fa-file-lines', color: 'var(--light-text)', type: 'txt' };
-            if (ext === 'html') return { icon: 'fa-file-code', color: '#ea580c', type: 'html' };
             return { icon: 'fa-file', color: 'gray', type: 'other' };
         }
 
-        async function loadFiles() {
-            // محاكاة جلب الملفات - استبدلها بـ Fetch API الخاص بـ Github كما في كودك الأساسي
-            classFolders.forEach(folder => {
-                renderFolder(folder);
-            });
-        }
-
-        function renderFolder(folderName) {
-            const header = document.createElement("tr");
-            header.className = "folder-header";
-            header.innerHTML = `
-                <td colspan="3">
-                    <div class="folder-title">
-                        <i class="fa-solid fa-chevron-left arrow-icon"></i>
-                        <i class="fa-solid fa-folder-closed" style="margin-left:10px; color:var(--accent-color)"></i>
-                        ${folderName}
-                    </div>
-                </td>
-            `;
-            header.onclick = () => {
-                const arrow = header.querySelector(".arrow-icon");
-                const isOpen = arrow.style.transform === "rotate(-90deg)";
-                arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
-                document.querySelectorAll(`.file-row[data-folder="${folderName}"]`).forEach(row => {
-                    row.style.display = isOpen ? "none" : "table-row";
-                });
-            };
-            fileList.appendChild(header);
-            
-            // إضافة ملفات تجريبية للفحص
-            const testFiles = ["بيان.pdf", "جدول.xlsx", "فيديو_شرح.mp4", "ملاحظات.txt"];
-            testFiles.forEach(f => addFileRow(f, folderName));
-        }
-
-        function addFileRow(name, folder) {
-            const data = getFileData(name);
-            const tr = document.createElement("tr");
-            tr.className = "file-row";
-            tr.dataset.folder = folder;
-            tr.dataset.type = data.type;
-            tr.dataset.name = name.toLowerCase();
-            tr.style.display = "none"; // مخفي افتراضياً حتى يفتح المجلد
-
-            const isFav = favorites.includes(name);
-
-            tr.innerHTML = `
-                <td style="padding:15px; width:40px;">
-                    <i class="fa-star ${isFav ? 'fa-solid active' : 'fa-regular'} fav-btn"></i>
-                </td>
-                <td style="padding:15px; cursor:pointer; font-size:0.95em;">${name.split('.')[0]}</td>
-                <td style="padding:15px; text-align:center; width:50px;">
-                    <i class="fa-solid ${data.icon}" style="color:${data.color}; font-size:1.4em;"></i>
-                </td>
-            `;
-
-            tr.querySelector(".fav-btn").onclick = (e) => {
-                e.stopPropagation();
-                toggleFavorite(name, e.target);
-            };
-
-            tr.onclick = () => {
-                document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
-                tr.classList.add('active');
-                openFile(name);
-            };
-
-            fileList.appendChild(tr);
-        }
-
-        function toggleFavorite(name, icon) {
-            if (favorites.includes(name)) {
-                favorites = favorites.filter(f => f !== name);
-                icon.classList.replace('fa-solid', 'fa-regular');
-                icon.classList.remove('active');
-            } else {
-                favorites.push(name);
-                icon.classList.replace('fa-regular', 'fa-solid');
-                icon.classList.add('active');
-            }
-            localStorage.setItem('my-favs', JSON.stringify(favorites));
-        }
-
-        function openFile(name) {
+        function displayFile(name, url, ext) {
             document.getElementById("current-file-name").innerText = name;
+            const downloadBtn = document.getElementById("download-btn");
             downloadBtn.style.display = "inline-flex";
-            viewer.innerHTML = `<iframe src="files/${name}"></iframe>`;
-            // ملاحظة: لملفات الـ Office يجب استخدام Google Docs Viewer كما في الكود الأصلي
+            downloadBtn.href = url;
+
+            if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+                viewer.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}"></iframe>`;
+            } else {
+                viewer.innerHTML = `<iframe src="${url}"></iframe>`;
+            }
         }
 
-        function filterFiles() {
+        function filter() {
             const term = searchInput.value.toLowerCase();
-            const filter = fileFilter.value;
-            
+            const typeFilter = fileFilter.value;
             document.querySelectorAll(".file-row").forEach(row => {
                 const name = row.dataset.name;
                 const type = row.dataset.type;
-                const isFav = favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop());
-
+                const isFav = favorites.some(f => f.toLowerCase().includes(name));
                 const matchSearch = name.includes(term);
-                const matchType = (filter === "all") || (filter === "fav" && favorites.includes(row.innerText.trim().split('\n')[0])) || (type === filter);
-
-                if (matchSearch && matchType) {
-                    row.style.display = "table-row";
-                    // إذا كان هناك بحث، نفتح المجلدات تلقائياً
-                    if(term !== "") {
-                         const header = document.querySelector(`.folder-header`); // تبسيط للمثال
-                    }
-                } else {
-                    row.style.display = "none";
-                }
+                const matchType = (typeFilter === "all") || (typeFilter === "fav" && favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop())) || (type === typeFilter);
+                row.style.display = (matchSearch && matchType) ? "table-row" : "none";
             });
         }
 
-        searchInput.oninput = filterFiles;
-        fileFilter.onchange = filterFiles;
-        
-        document.getElementById("dark-mode-toggle").onclick = () => {
-            document.body.classList.toggle("dark-mode");
-        };
+        searchInput.oninput = filter;
+        fileFilter.onchange = filter;
+        document.getElementById("dark-mode-toggle").onclick = () => document.body.classList.toggle("dark-mode");
 
-        loadFiles();
+        init();
       });
     </script>
   </body>
 </html>
+
