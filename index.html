@@ -21,7 +21,6 @@
             --light-text: #64748b;
             --hover-bg: #f1f5f9;
             --shadow-elevation: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --fav-color: #f59e0b;
             --icon-pdf: #e11d48;
             --icon-word: #2563eb;
             --icon-excel: #16a34a;
@@ -85,9 +84,8 @@
             color: var(--accent-color);
         }
 
-        /* تعديلات خانة البحث لتطابق عرض الملفات */
         .filter-box {
-            padding: 15px; /* تطابق الـ padding الداخلي للملفات */
+            padding: 15px;
             background: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
         }
@@ -101,7 +99,7 @@
             color: var(--text-color);
             margin-bottom: 10px;
             font-family: inherit;
-            box-sizing: border-box; /* يضمن عدم خروج العنصر عن عرض الحاوية */
+            box-sizing: border-box;
             display: block;
         }
 
@@ -116,7 +114,7 @@
         .file-row.active { background-color: rgba(197, 160, 89, 0.1); border-right: 4px solid var(--accent-color); }
 
         .file-info { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
-        .file-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
         .file-date { font-size: 0.75em; color: var(--light-text); }
 
         .main-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; }
@@ -131,16 +129,27 @@
 
         #viewer {
             flex-grow: 1;
-            background: white;
+            background: #e5e7eb;
             border-radius: 12px;
             box-shadow: var(--shadow-elevation);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            position: relative;
         }
 
-        iframe, video, img { width: 100%; height: 100%; border: none; }
+        /* لودر يظهر أثناء تحميل القارئ */
+        .loader-bg {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--light-text);
+            z-index: 0;
+        }
+
+        iframe, video, img { width: 100%; height: 100%; border: none; position: relative; z-index: 1; background: white; }
         
         @media (max-width: 768px) {
             .container { flex-direction: column; }
@@ -172,8 +181,6 @@
                     <option value="img">ملفات الصور</option>
                     <option value="video">ملفات الفيديو</option>
                     <option value="audio">ملفات الصوت</option>
-                    <option value="txt">ملفات نصية</option>
-                    <option value="html">ملفات HTML</option>
                 </select>
             </div>
 
@@ -196,7 +203,7 @@
             </div>
 
             <div id="viewer">
-                <div style="text-align: center; color: var(--light-text);">
+                <div class="loader-bg" id="initial-msg">
                     <i class="fa-solid fa-file-circle-question fa-4x" style="margin-bottom: 15px; opacity: 0.3;"></i>
                     <p>الرجاء اختيار ملف من القائمة الجانبية</p>
                 </div>
@@ -246,15 +253,12 @@
             if (['png', 'jpg', 'jpeg'].includes(ext)) return { icon: 'fa-file-image', color: 'var(--accent-color)', type: 'img' };
             if (['mp4', 'mov'].includes(ext)) return { icon: 'fa-file-video', color: 'var(--icon-media)', type: 'video' };
             if (['mp3', 'wav'].includes(ext)) return { icon: 'fa-file-audio', color: 'var(--icon-media)', type: 'audio' };
-            if (ext === 'txt') return { icon: 'fa-file-lines', color: 'var(--light-text)', type: 'txt' };
-            if (ext === 'html') return { icon: 'fa-file-code', color: '#ea580c', type: 'html' };
             return { icon: 'fa-file', color: 'gray', type: 'other' };
         }
 
         function renderList(files) {
             const list = document.getElementById("file-list");
             list.innerHTML = '';
-
             files.forEach(file => {
                 const info = getFileData(file.name);
                 const tr = document.createElement("tr");
@@ -268,7 +272,6 @@
                         </div>
                     </td>
                 `;
-
                 tr.onclick = () => {
                     document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
                     tr.classList.add('active');
@@ -288,14 +291,29 @@
             btn.style.display = "inline-flex";
             btn.href = url;
 
-            if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
-                viewer.innerHTML = `<iframe src="https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true"></iframe>`;
+            // رسالة انتظار ذكية
+            viewer.innerHTML = `
+                <div class="loader-bg">
+                    <i class="fa-solid fa-spinner fa-spin fa-3x" style="margin-bottom:10px; color:var(--accent-color);"></i>
+                    <p>جاري استحضار الملف من قارئ جوجل...</p>
+                </div>
+            `;
+
+            // استخدام قارئ جوجل للمستندات والـ PDF
+            if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+                const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+                viewer.innerHTML += `<iframe src="${googleViewerUrl}"></iframe>`;
             } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
                 viewer.innerHTML = `<img src="${url}" style="object-fit:contain;">`;
             } else if (['mp4', 'mov'].includes(ext)) {
-                viewer.innerHTML = `<video controls><source src="${url}" type="video/mp4"></video>`;
+                viewer.innerHTML = `<video controls autoplay><source src="${url}" type="video/mp4"></video>`;
             } else {
-                viewer.innerHTML = `<iframe src="${url}"></iframe>`;
+                viewer.innerHTML += `<iframe src="${url}"></iframe>`;
+            }
+            
+            // تمرير للمعاينة في الجوال
+            if(window.innerWidth < 768) {
+                viewer.scrollIntoView({behavior: 'smooth'});
             }
         }
 
