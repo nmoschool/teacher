@@ -5,351 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ملفات وتعاميم مدرسة التحفيظ</title>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Tajawal:wght@300;400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet" />
 
     <style>
       :root {
-        --primary-color: #0b1528; /* الكحلي الغامق من الصورة */
-        --accent-color: #c5a059;  /* الذهبي من الصورة */
+        --primary-color: #0b1528; /* الكحلي الغامق */
+        --accent-color: #c5a059;  /* الذهبي */
         --bg-color: #f8fafc;
         --panel-bg: #ffffff;
         --border-color: #e2e8f0;
         --text-color: #1e293b;
-        --light-text: #64748b;
-        --hover-bg: #f1f5f9;
-        --shadow-elevation: 0 4px 20px rgba(0, 0, 0, 0.08);
-        --fav-color: #f59e0b;
-        /* ألوان الامتدادات */
         --icon-pdf: #e11d48;
-        --icon-word: #2563eb;
-        --icon-excel: #16a34a;
-        --icon-ppt: #ea580c;
-        --icon-media: #8b5cf6;
+        --fav-color: #f59e0b;
       }
 
-      body.dark-mode {
-        --bg-color: #0f172a;
-        --panel-bg: #1e293b;
-        --border-color: #334155;
-        --text-color: #f1f5f9;
-        --light-text: #94a3b8;
-        --hover-bg: #334155;
-      }
+      body { font-family: 'Almarai', sans-serif; margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; }
+      .container { display: flex; width: 100%; }
 
-      body {
-        font-family: "Almarai", sans-serif;
-        margin: 0;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        display: flex;
-        min-height: 100vh;
-        transition: all 0.3s ease;
-      }
+      /* Sidebar */
+      .sidebar { width: 350px; background: var(--panel-bg); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; }
+      .sidebar-header { background: var(--primary-color); padding: 20px; color: white; }
+      .sidebar-header h3 { margin: 0; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
+      
+      .filter-box { padding: 15px; border-bottom: 1px solid var(--border-color); }
+      #search-input, #file-filter { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid var(--border-color); box-sizing: border-box; }
 
-      .container { display: flex; width: 100%; flex-grow: 1; }
+      .list-container { overflow-y: auto; flex-grow: 1; }
+      table { width: 100%; border-collapse: collapse; }
+      
+      .folder-header { background: #f1f5f9; cursor: pointer; font-weight: bold; }
+      .folder-header td { padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--primary-color); }
+      
+      .file-row { cursor: pointer; transition: 0.2s; }
+      .file-row:hover { background: #f8fafc; }
+      .file-row td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
 
-      /* Sidebar Style */
-      .sidebar {
-        width: 380px;
-        background-color: var(--panel-bg);
-        border-left: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        box-shadow: var(--shadow-elevation);
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        z-index: 100;
-      }
-
-      .sidebar-header {
-        background-color: var(--primary-color);
-        padding: 25px;
-        color: white;
-      }
-
-      .sidebar-header .top-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      .sidebar-header h3 {
-        margin: 0;
-        font-size: 1.3em;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--accent-color);
-      }
-
-      .filter-box {
-        padding: 20px;
-        background: var(--panel-bg);
-        border-bottom: 1px solid var(--border-color);
-      }
-
-      #search-input, #file-filter {
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        background-color: var(--hover-bg);
-        color: var(--text-color);
-        margin-bottom: 12px;
-        font-family: inherit;
-        transition: 0.3s;
-      }
-
-      #search-input:focus {
-        border-color: var(--accent-color);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
-      }
-
-      /* Folder and File Styles */
-      .folder-header { background: var(--hover-bg); cursor: pointer; transition: 0.3s; }
-      .folder-header:hover { background: var(--border-color); }
-      .folder-title { padding: 15px; display: flex; align-items: center; font-weight: 700; color: var(--primary-color); }
-      body.dark-mode .folder-title { color: var(--accent-color); }
-
-      .arrow-icon { transition: transform 0.3s ease; margin-left: 10px; }
-
-      .file-row { transition: all 0.2s; cursor: pointer; }
-      .file-row:hover { background-color: var(--hover-bg); }
-      .file-row.active { background-color: rgba(197, 160, 89, 0.1); border-right: 4px solid var(--accent-color); }
-
-      .fav-btn { color: #cbd5e1; cursor: pointer; transition: 0.2s; padding: 5px; }
-      .fav-btn.active { color: var(--fav-color); }
-
-      /* Main View */
-      .main-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; }
-      .viewer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid var(--accent-color);
-      }
-
-      #viewer {
-        flex-grow: 1;
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow-elevation);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-      }
-
+      /* Main Content */
+      .main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; }
+      .viewer-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 2px solid var(--accent-color); margin-bottom: 15px; }
+      #viewer { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; }
       iframe { width: 100%; height: 100%; border: none; }
 
-      .no-results { padding: 40px; text-align: center; color: var(--light-text); }
-
-      @media (max-width: 768px) {
-        .container { flex-direction: column; }
-        .sidebar { width: 100%; height: auto; position: static; }
-        #viewer { min-height: 500px; }
-      }
+      .fav-btn { cursor: pointer; color: #ccc; }
+      .fav-btn.active { color: var(--fav-color); }
+      .arrow { transition: 0.3s; display: inline-block; margin-left: 8px; }
+      .rotate { transform: rotate(-90deg); }
     </style>
   </head>
   <body>
+
     <div class="container">
       <aside class="sidebar">
         <div class="sidebar-header">
-          <div class="top-row">
-            <h3>قائمة الملفات <i class="fa-solid fa-folder-open"></i></h3>
-            <button id="dark-mode-toggle" style="background:none; border:none; color:white; cursor:pointer;">
-              <i class="fa-solid fa-moon"></i>
-            </button>
-          </div>
+          <h3>قائمة الملفات <i class="fa-solid fa-folder-open"></i></h3>
         </div>
-        
         <div class="filter-box">
-          <input type="text" id="search-input" placeholder="🔍 بحث عن اسم الملف..." />
+          <input type="text" id="search-input" placeholder="🔍 بحث عن ملف..." />
           <select id="file-filter">
             <option value="all">عرض الكل</option>
             <option value="fav">⭐ المفضلة</option>
-            <option value="pdf">ملفات PDF</option>
-            <option value="doc">مستندات Word</option>
-            <option value="xls">جداول Excel</option>
-            <option value="ppt">عروض PowerPoint</option>
-            <option value="img">ملفات الصور</option>
-            <option value="video">فيديو</option>
-            <option value="audio">صوت</option>
           </select>
         </div>
-
-        <div style="overflow-y: auto; flex-grow: 1;" id="sidebar-scroll">
-          <table style="width:100%; border-collapse: collapse;">
+        <div class="list-container">
+          <table>
             <tbody id="file-list">
-                </tbody>
+              <tr><td style="text-align:center; padding:20px;">جاري تحميل الملفات...</td></tr>
+            </tbody>
           </table>
         </div>
       </aside>
 
       <main class="main-content">
         <div class="viewer-header">
-          <div>
-            <h2 id="current-file-name" style="margin:0; font-size: 1.3em;">ملفات وتعاميم مدرسة التحفيظ</h2>
-            <small style="color:var(--accent-color); font-weight: bold;">برمجة: NMO</small>
-          </div>
-          <a href="#" id="download-btn" style="display:none; background:var(--primary-color); color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight: bold;">
-            <i class="fa-solid fa-download"></i> تحميل
-          </a>
+          <h2 id="current-file-name" style="margin:0;">ملفات مدرسة التحفيظ</h2>
+          <a href="#" id="download-btn" style="display:none; background:var(--primary-color); color:white; padding:8px 15px; border-radius:5px; text-decoration:none;">تحميل</a>
         </div>
         <div id="viewer">
-            <div class="no-results">اختر ملفاً لعرضه هنا</div>
+          <p style="color:#94a3b8;">اختر ملفاً من القائمة لعرضه</p>
         </div>
       </main>
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const fileListElement = document.getElementById("file-list");
-        const viewer = document.getElementById("viewer");
-        const searchInput = document.getElementById("search-input");
-        const fileFilter = document.getElementById("file-filter");
-        const downloadBtn = document.getElementById("download-btn");
+      const USER = "nmoschool";
+      const REPO = "teacher";
+      const FOLDER = "files";
+      
+      let favorites = JSON.parse(localStorage.getItem('favs')) || [];
 
-        const config = {
-          username: "nmoschool",
-          repo: "teacher",
-          basePath: "files"
-        };
+      async function fetchAll() {
+        const url = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          const listElement = document.getElementById('file-list');
+          listElement.innerHTML = "";
 
-        let favorites = JSON.parse(localStorage.getItem('teacher-favs')) || [];
-
-        async function fetchFolders() {
-          const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/${config.basePath}`;
-          try {
-            const res = await fetch(url);
-            const items = await res.json();
-            fileListElement.innerHTML = "";
-            for (let item of items) {
-              if (item.type === "dir") {
-                await renderFolder(item.name, item.path);
-              }
+          // معالجة الملفات والمجلدات
+          for (const item of data) {
+            if (item.type === "dir") {
+              await addFolder(item);
+            } else {
+              addFileRow(item, "عام");
             }
-          } catch (e) {
-            fileListElement.innerHTML = '<div class="no-results">فشل الاتصال بـ GitHub</div>';
           }
+        } catch (e) {
+          document.getElementById('file-list').innerHTML = "<tr><td>خطأ في تحميل البيانات</td></tr>";
         }
+      }
 
-        async function renderFolder(folderName, path) {
-          const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/${path}`;
-          const res = await fetch(url);
-          const files = await res.json();
+      async function addFolder(folder) {
+        const listElement = document.getElementById('file-list');
+        const header = document.createElement('tr');
+        header.className = "folder-header";
+        header.innerHTML = `<td colspan="3"><i class="fa-solid fa-chevron-left arrow"></i> <i class="fa-solid fa-folder" style="color:var(--accent-color)"></i> ${folder.name}</td>`;
+        
+        const folderId = folder.name.replace(/\s+/g, '-');
+        header.onclick = () => {
+            header.querySelector('.arrow').classList.toggle('rotate');
+            document.querySelectorAll(`.row-${folderId}`).forEach(r => {
+                r.style.display = r.style.display === "none" ? "table-row" : "none";
+            });
+        };
+        listElement.appendChild(header);
 
-          if (files.length === 0) return;
+        const res = await fetch(folder.url);
+        const files = await res.json();
+        files.forEach(file => {
+          if (file.type === "file") addFileRow(file, folder.name, folderId);
+        });
+      }
 
-          const header = document.createElement("tr");
-          header.className = "folder-header";
-          header.innerHTML = `
-            <td colspan="3">
-              <div class="folder-title">
-                <i class="fa-solid fa-chevron-left arrow-icon"></i>
-                <i class="fa-solid fa-folder-closed" style="margin-left:10px; color:var(--accent-color)"></i>
-                ${folderName}
-              </div>
-            </td>`;
-          
-          header.onclick = () => {
-            const isOpen = header.dataset.open === "true";
-            header.dataset.open = !isOpen;
-            header.querySelector(".arrow-icon").style.transform = isOpen ? "rotate(0deg)" : "rotate(-90deg)";
-            document.querySelectorAll(`.file-row[data-parent="${folderName}"]`).forEach(r => r.style.display = isOpen ? "none" : "table-row");
-          };
-          
-          fileListElement.appendChild(header);
-          files.forEach(file => {
-            if (file.type === "file") addFileRow(file, folderName);
-          });
-        }
+      function addFileRow(file, folderName, folderId = "root") {
+        const listElement = document.getElementById('file-list');
+        const isFav = favorites.includes(file.name);
+        const ext = file.name.split('.').pop().toLowerCase();
+        
+        const tr = document.createElement('tr');
+        tr.className = `file-row row-${folderId}`;
+        tr.style.display = folderId === "root" ? "table-row" : "none";
+        tr.dataset.name = file.name.toLowerCase();
+        
+        tr.innerHTML = `
+          <td style="width:30px;"><i class="fa-star ${isFav?'fa-solid active':'fa-regular'} fav-btn"></i></td>
+          <td>${file.name}</td>
+          <td style="text-align:center; width:40px;"><i class="fa-solid ${getIcon(ext)}" style="color:${getIconColor(ext)}"></i></td>
+        `;
 
-        function addFileRow(file, folderName) {
-          const ext = file.name.split('.').pop().toLowerCase();
-          const fileConfig = getFileIcon(ext);
-          const isFav = favorites.includes(file.name);
-
-          const tr = document.createElement("tr");
-          tr.className = "file-row";
-          tr.dataset.parent = folderName;
-          tr.dataset.type = fileConfig.type;
-          tr.dataset.name = file.name.toLowerCase();
-          tr.style.display = "none";
-
-          tr.innerHTML = `
-            <td style="padding:15px; width:40px;"><i class="fa-star ${isFav ? 'fa-solid active' : 'fa-regular'} fav-btn"></i></td>
-            <td style="padding:15px;">${file.name.split('.')[0]}</td>
-            <td style="padding:15px; text-align:center;"><i class="fa-solid ${fileConfig.icon}" style="color:${fileConfig.color}; font-size:1.4em;"></i></td>
-          `;
-
-          tr.querySelector(".fav-btn").onclick = (e) => {
-            e.stopPropagation();
-            if(favorites.includes(file.name)) favorites = favorites.filter(f => f !== file.name);
-            else favorites.push(file.name);
-            localStorage.setItem('teacher-favs', JSON.stringify(favorites));
-            e.target.classList.toggle('fa-solid'); e.target.classList.toggle('fa-regular'); e.target.classList.toggle('active');
-          };
-
-          tr.onclick = () => {
-            document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
-            tr.classList.add('active');
-            displayFile(file.name, file.download_url, ext);
-          };
-
-          fileListElement.appendChild(tr);
-        }
-
-        function getFileIcon(ext) {
-          if (ext === 'pdf') return { icon: 'fa-file-pdf', color: 'var(--icon-pdf)', type: 'pdf' };
-          if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', color: 'var(--icon-word)', type: 'doc' };
-          if (['xls', 'xlsx'].includes(ext)) return { icon: 'fa-file-excel', color: 'var(--icon-excel)', type: 'xls' };
-          if (['ppt', 'pptx'].includes(ext)) return { icon: 'fa-file-powerpoint', color: 'var(--icon-ppt)', type: 'ppt' };
-          if (['png', 'jpg', 'jpeg'].includes(ext)) return { icon: 'fa-file-image', color: 'var(--accent-color)', type: 'img' };
-          if (['mp4', 'mov'].includes(ext)) return { icon: 'fa-file-video', color: 'var(--icon-media)', type: 'video' };
-          if (['mp3', 'wav'].includes(ext)) return { icon: 'fa-file-audio', color: 'var(--icon-media)', type: 'audio' };
-          return { icon: 'fa-file', color: 'gray', type: 'other' };
-        }
-
-        function displayFile(name, url, ext) {
-          document.getElementById("current-file-name").innerText = name;
-          downloadBtn.style.display = "inline-flex";
-          downloadBtn.href = url;
-
-          if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
-            viewer.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}"></iframe>`;
+        tr.onclick = (e) => {
+          if (e.target.classList.contains('fav-btn')) {
+            toggleFav(file.name, e.target);
           } else {
-            viewer.innerHTML = `<iframe src="${url}"></iframe>`;
+            displayFile(file.name, file.download_url);
           }
+        };
+        listElement.appendChild(tr);
+      }
+
+      function getIcon(ext) {
+        if (ext === 'pdf') return 'fa-file-pdf';
+        if (['doc', 'docx'].includes(ext)) return 'fa-file-word';
+        if (['xls', 'xlsx'].includes(ext)) return 'fa-file-excel';
+        return 'fa-file';
+      }
+
+      function getIconColor(ext) {
+        if (ext === 'pdf') return '#e11d48';
+        if (ext.includes('doc')) return '#2563eb';
+        return '#64748b';
+      }
+
+      function displayFile(name, url) {
+        document.getElementById('current-file-name').innerText = name;
+        const viewer = document.getElementById('viewer');
+        const ext = name.split('.').pop().toLowerCase();
+        const downloadBtn = document.getElementById('download-btn');
+        
+        downloadBtn.style.display = "block";
+        downloadBtn.href = url;
+
+        if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+          viewer.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}"></iframe>`;
+        } else {
+          viewer.innerHTML = `<iframe src="${url}"></iframe>`;
         }
+      }
 
-        function applyFilter() {
-          const term = searchInput.value.toLowerCase();
-          const type = fileFilter.value;
-          document.querySelectorAll(".file-row").forEach(row => {
-            const name = row.dataset.name;
-            const fileType = row.dataset.type;
-            const isFav = favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop());
-            const matchesSearch = name.includes(term);
-            const matchesType = (type === "all") || (type === "fav" && favorites.includes(row.querySelector('td:nth-child(2)').innerText + '.' + name.split('.').pop())) || (fileType === type);
-            row.style.display = (matchesSearch && matchesType) ? "table-row" : "none";
-          });
+      function toggleFav(name, el) {
+        if (favorites.includes(name)) {
+          favorites = favorites.filter(f => f !== name);
+          el.classList.replace('fa-solid', 'fa-regular');
+          el.classList.remove('active');
+        } else {
+          favorites.push(name);
+          el.classList.replace('fa-regular', 'fa-solid');
+          el.classList.add('active');
         }
+        localStorage.setItem('favs', JSON.stringify(favorites));
+      }
 
-        searchInput.oninput = applyFilter;
-        fileFilter.onchange = applyFilter;
-        document.getElementById("dark-mode-toggle").onclick = () => document.body.classList.toggle("dark-mode");
+      // البحث
+      document.getElementById('search-input').oninput = (e) => {
+        const val = e.target.value.toLowerCase();
+        document.querySelectorAll('.file-row').forEach(row => {
+          row.style.display = row.dataset.name.includes(val) ? "table-row" : "none";
+        });
+      };
 
-        fetchFolders();
-      });
+      fetchAll();
     </script>
   </body>
 </html>
