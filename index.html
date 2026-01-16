@@ -12,7 +12,7 @@
 
     <style>
         :root {
-            --primary-color: #111111; --accent-color: #c5a059; --bg-color: #f8fafc;        
+            --primary-color: #064e3b; --accent-color: #c5a059; --bg-color: #f8fafc;        
             --panel-bg: #ffffff; --border-color: #e2e8f0; --text-color: #1e293b;      
             --light-text: #64748b; --hover-bg: #f1f5f9; --glass-bg: rgba(255, 255, 255, 0.7);
             --shadow-elevation: 0 10px 25px rgba(0, 0, 0, 0.05);
@@ -102,8 +102,7 @@
         #viewer { flex-grow: 1; background: #e2e8f0; border-radius: 20px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
         iframe, video, img { width: 100%; height: 100%; border: none; background: white; }
 
-        /* تنسيق مشغل الصوت */
-        .audio-player-container {
+        .audio-player-container, .unsupported-container {
             text-align: center; background: var(--panel-bg); padding: 40px; border-radius: 25px; 
             box-shadow: var(--shadow-elevation); width: 80%; max-width: 400px;
         }
@@ -159,7 +158,8 @@
             <option value="رابع ابتدائي">رابع ابتدائي</option>
             <option value="خامس ابتدائي">خامس ابتدائي</option>
             <option value="سادس ابتدائي">سادس ابتدائي</option>
-            <option value="تعاميم">تعاميم</option>
+            <option value="الجداول الدراسية">الجداول الدراسية</option>
+            <option value="جداول الاختبارات">جداول الاختبارات</option>
             <option value="ملفات عامة">ملفات عامة</option>
         </select>
         <div style="display:flex; gap:10px; margin-top:20px;">
@@ -177,9 +177,9 @@
                     <div class="separator"></div>
                     <i id="theme-icon" class="fa-solid fa-moon control-icon-btn" onclick="toggleTheme()"></i>
                 </div>
-                <h2 style="text-align:center; margin-top:20px; font-size:1.5em; color:#fff; position: relative; z-index: 2;">
+                <h2 style="text-align:center; margin-top:20px; font-size:1.7em; color:#fff; position: relative; z-index: 2;">
                     مستعرض ملفات مدرسة تحفيظ القرآن بالبجادية 
-                    <br><span style="font-size: 0.8em; opacity: 0.9;">"خاص بالمعلمين"</span>
+                    <br><span style="font-size: 0.8em; opacity: 0.9;"></span>
                 </h2>
             </div>
 
@@ -197,7 +197,8 @@
                     <div class="folder-item" onclick="filterByFolder('رابع ابتدائي')"><i class="fa-solid fa-folder"></i> رابع</div>
                     <div class="folder-item" onclick="filterByFolder('خامس ابتدائي')"><i class="fa-solid fa-folder"></i> خامس</div>
                     <div class="folder-item" onclick="filterByFolder('سادس ابتدائي')"><i class="fa-solid fa-folder"></i> سادس</div>
-                    <div class="folder-item folder-full" onclick="filterByFolder('تعاميم')"><i class="fa-solid fa-bullhorn"></i> تعاميم</div>
+                    <div class="folder-item folder-full" onclick="filterByFolder('الجداول الدراسية')"><i class="fa-solid fa-calendar-days"></i> الجداول الدراسية</div>
+                    <div class="folder-item folder-full" onclick="filterByFolder('جداول الاختبارات')"><i class="fa-solid fa-file-signature"></i> جداول الاختبارات</div>
                     <div class="folder-item folder-full" onclick="filterByFolder('ملفات عامة')"><i class="fa-solid fa-folder"></i> ملفات عامة</div>
                 </div>
 
@@ -227,7 +228,7 @@
     </div>
 
     <script>
-        const CONFIG = { username: 'nmoschool', repo: 'teacher', branch: 'main', path: 'files' };
+        const CONFIG = { username: 'nmoschool', repo: 'Students', branch: 'main', path: 'files' };
         let allFiles = [], favorites = JSON.parse(localStorage.getItem('file_stars')) || [];
         let currentFolder = 'all', deleteTarget = null, renameTarget = null, moveTarget = null;
 
@@ -254,6 +255,19 @@
             if(t) { localStorage.setItem('github_token', t); location.reload(); }
         }
 
+        // دالة تنظيف منطقة العرض
+        function resetViewer() {
+            document.getElementById("current-file-name").innerText = "يرجى اختيار ملف";
+            document.getElementById("download-btn").style.display = "none";
+            document.getElementById("viewer").innerHTML = `
+                <div id="viewer-empty" style="text-align:center; opacity:0.2;">
+                    <i class="fa-solid fa-file-circle-question fa-5x"></i>
+                    <p>لا يوجد ملف مفتوح حالياً</p>
+                </div>`;
+            const rows = document.querySelectorAll('.file-row');
+            rows.forEach(r => r.classList.remove('active'));
+        }
+
         async function loadFromGithub() {
             if(isAdmin()) {
                 document.getElementById('admin-icon').classList.replace('fa-user-shield', 'fa-unlock-keyhole');
@@ -271,7 +285,11 @@
             } catch (e) { list.innerHTML = '<center>خطأ في الاتصال</center>'; }
         }
 
-        function filterByFolder(folder) { currentFolder = folder; handleSearchOrFilter(); }
+        function filterByFolder(folder) { 
+            currentFolder = folder; 
+            resetViewer(); // تنظيف العرض عند تغيير المجلد
+            handleSearchOrFilter(); 
+        }
 
         function handleSearchOrFilter() {
             const searchVal = document.getElementById('search-input').value.toLowerCase();
@@ -302,12 +320,15 @@
                             <i class="fa-solid fa-trash" style="color:#ef4444;" onclick="openDeleteModal(event, '${file.name}', '${file.sha}')"></i>
                         ` : ''}
                     </div>`;
-                div.onclick = () => openFile(file.name, file.download_url);
+                div.onclick = (e) => {
+                    document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
+                    div.classList.add('active');
+                    openFile(file.name, file.download_url);
+                };
                 list.appendChild(div);
             });
         }
 
-        // الدالة المحدثة لدعم كافة الإمتدادات
         function openFile(name, url) {
             document.getElementById("current-file-name").innerText = cleanFileName(name);
             document.getElementById("download-btn").style.display = "inline-flex";
@@ -315,34 +336,38 @@
             const viewer = document.getElementById("viewer");
             const ext = name.split('.').pop().toLowerCase();
             
-            // 1. المستندات (تفتح عبر جوجل)
-            const docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv', 'odt', 'ods', 'odp', 'pages', 'numbers', 'key'];
-            // 2. الصور
-            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tiff', 'tif'];
-            // 3. الفيديو
-            const vidExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', '3gp'];
-            // 4. الصوت
-            const audExts = ['mp3', 'wav', 'm4a', 'aac', 'flac', 'opus', 'ogg'];
+            // مجموعات الامتدادات المحددة
+            const docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'];
+            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp'];
+            const vidExts = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+            const audExts = ['mp3', 'wav', 'm4a', 'aac'];
 
             if (docExts.includes(ext)) {
                 viewer.innerHTML = `<iframe src="https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true"></iframe>`;
             } else if (imgExts.includes(ext)) {
                 viewer.innerHTML = `<img src="${url}" style="object-fit:contain; max-width:100%; max-height:100%;">`;
             } else if (vidExts.includes(ext)) {
-                viewer.innerHTML = `<video controls autoplay style="width:100%; height:100%;"><source src="${url}">متصفحك لا يدعم الفيديو.</video>`;
+                viewer.innerHTML = `
+                    <div class="unsupported-container">
+                        <i class="fa-solid fa-file-video fa-5x" style="color:#2563eb; margin-bottom:20px;"></i>
+                        <h3>ملف فيديو (.${ext})</h3>
+                        <video controls autoplay style="width:100%; border-radius:10px; margin-top:10px;"><source src="${url}">عذراً، متصفحك لا يدعم التشغيل.</video>
+                    </div>`;
             } else if (audExts.includes(ext)) {
                 viewer.innerHTML = `
                     <div class="audio-player-container">
                         <i class="fa-solid fa-file-audio fa-5x" style="color:var(--accent-color); margin-bottom:20px;"></i>
-                        <audio controls autoplay style="width:100%;"><source src="${url}">متصفحك لا يدعم الصوت.</audio>
-                        <p style="margin-top:15px; font-size:0.9em;">${cleanFileName(name)}</p>
+                        <h3>ملف صوتي (.${ext})</h3>
+                        <audio controls autoplay style="width:100%; margin-top:10px;"><source src="${url}">عذراً، متصفحك لا يدعم التشغيل.</audio>
+                        <p style="margin-top:15px; font-size:0.9em;">جاري تشغيل: ${cleanFileName(name)}</p>
                     </div>`;
             } else {
                 viewer.innerHTML = `
-                    <div style="text-align:center; padding:30px; background:var(--panel-bg); border-radius:20px;">
+                    <div class="unsupported-container">
                         <i class="fa-solid fa-file-zipper fa-5x" style="opacity:0.2; margin-bottom:20px;"></i>
-                        <h3>ملف غير قابل للمعاينة</h3>
-                        <p>ملفات ( .${ext} ) لا يمكن عرضها مباشرة. يرجى استخدام زر التحميل بالأعلى.</p>
+                        <h3>ملف من نوع (.${ext})</h3>
+                        <p>هذا النوع من الملفات لا يدعم المعاينة المباشرة.</p>
+                        <a href="${url}" target="_blank" style="display:inline-block; background:var(--accent-color); color:white; padding:10px 20px; border-radius:10px; text-decoration:none; margin-top:10px;">تحميل الملف الآن</a>
                     </div>`;
             }
         }
@@ -417,3 +442,4 @@
     </script>
 </body>
 </html>
+
