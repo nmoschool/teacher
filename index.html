@@ -16,8 +16,6 @@
             --panel-bg: #ffffff; --border-color: #e2e8f0; --text-color: #1e293b;      
             --light-text: #64748b; --hover-bg: #f1f5f9; --glass-bg: rgba(255, 255, 255, 0.7);
             --shadow-elevation: 0 10px 25px rgba(0, 0, 0, 0.05);
-            --icon-pdf: #e11d48; --icon-word: #2563eb; --icon-excel: #16a34a;
-            --icon-ppt: #ea580c; --icon-img: #c5a059; --icon-video: #8b5cf6;
         }
 
         body.dark-mode {
@@ -98,12 +96,17 @@
             border-radius: 25px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             animation: slideUp 0.4s ease;
         }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; background-color: var(--bg-color); }
         .viewer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;}
         #viewer { flex-grow: 1; background: #e2e8f0; border-radius: 20px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
         iframe, video, img { width: 100%; height: 100%; border: none; background: white; }
+
+        /* تنسيق مشغل الصوت */
+        .audio-player-container {
+            text-align: center; background: var(--panel-bg); padding: 40px; border-radius: 25px; 
+            box-shadow: var(--shadow-elevation); width: 80%; max-width: 400px;
+        }
 
         @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: static; } #viewer { min-height: 450px; } .container { flex-direction: column; } }
     </style>
@@ -226,7 +229,7 @@
     <script>
         const CONFIG = { username: 'nmoschool', repo: 'teacher', branch: 'main', path: 'files' };
         let allFiles = [], favorites = JSON.parse(localStorage.getItem('file_stars')) || [];
-        let currentFolder = 'all', deleteTarget = null, renameTarget = null;
+        let currentFolder = 'all', deleteTarget = null, renameTarget = null, moveTarget = null;
 
         const isAdmin = () => !!localStorage.getItem('github_token');
         const getStoredToken = () => localStorage.getItem('github_token');
@@ -254,7 +257,7 @@
         async function loadFromGithub() {
             if(isAdmin()) {
                 document.getElementById('admin-icon').classList.replace('fa-user-shield', 'fa-unlock-keyhole');
-                document.getElementById('btn-upload').style.display = 'flex'; // إظهار الزر في وضع الإدارة فقط
+                document.getElementById('btn-upload').style.display = 'flex';
             }
             const list = document.getElementById("file-list");
             list.innerHTML = '<center style="padding:20px;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</center>';
@@ -273,24 +276,10 @@
         function handleSearchOrFilter() {
             const searchVal = document.getElementById('search-input').value.toLowerCase();
             const filterVal = document.getElementById('file-filter').value;
-            
             let filtered = allFiles;
-            
-            // فلترة المجلدات
-            if (currentFolder !== 'all') {
-                filtered = filtered.filter(f => f.name.includes(`[${currentFolder}]`));
-            }
-            
-            // فلترة البحث
-            if (searchVal) {
-                filtered = filtered.filter(f => f.name.toLowerCase().includes(searchVal));
-            }
-
-            // فلترة المفضلة
-            if (filterVal === 'fav') {
-                filtered = filtered.filter(f => favorites.includes(f.name));
-            }
-
+            if (currentFolder !== 'all') filtered = filtered.filter(f => f.name.includes(`[${currentFolder}]`));
+            if (searchVal) filtered = filtered.filter(f => f.name.toLowerCase().includes(searchVal));
+            if (filterVal === 'fav') filtered = filtered.filter(f => favorites.includes(f.name));
             renderList(filtered);
         }
 
@@ -318,6 +307,7 @@
             });
         }
 
+        // الدالة المحدثة لدعم كافة الإمتدادات
         function openFile(name, url) {
             document.getElementById("current-file-name").innerText = cleanFileName(name);
             document.getElementById("download-btn").style.display = "inline-flex";
@@ -325,22 +315,35 @@
             const viewer = document.getElementById("viewer");
             const ext = name.split('.').pop().toLowerCase();
             
-            // دعم جميع الامتدادات (صور، فيديو، مستندات)
-            const docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf'];
-            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp'];
-            const vidExts = ['mp4', 'webm', 'ogg', 'mov'];
-            const audExts = ['mp3', 'wav', 'm4a'];
+            // 1. المستندات (تفتح عبر جوجل)
+            const docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv', 'odt', 'ods', 'odp', 'pages', 'numbers', 'key'];
+            // 2. الصور
+            const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tiff', 'tif'];
+            // 3. الفيديو
+            const vidExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', '3gp'];
+            // 4. الصوت
+            const audExts = ['mp3', 'wav', 'm4a', 'aac', 'flac', 'opus', 'ogg'];
 
             if (docExts.includes(ext)) {
                 viewer.innerHTML = `<iframe src="https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true"></iframe>`;
             } else if (imgExts.includes(ext)) {
-                viewer.innerHTML = `<img src="${url}" style="object-fit:contain;">`;
+                viewer.innerHTML = `<img src="${url}" style="object-fit:contain; max-width:100%; max-height:100%;">`;
             } else if (vidExts.includes(ext)) {
-                viewer.innerHTML = `<video controls style="max-width:100%;"><source src="${url}" type="video/mp4"></video>`;
+                viewer.innerHTML = `<video controls autoplay style="width:100%; height:100%;"><source src="${url}">متصفحك لا يدعم الفيديو.</video>`;
             } else if (audExts.includes(ext)) {
-                viewer.innerHTML = `<audio controls><source src="${url}"></audio>`;
+                viewer.innerHTML = `
+                    <div class="audio-player-container">
+                        <i class="fa-solid fa-file-audio fa-5x" style="color:var(--accent-color); margin-bottom:20px;"></i>
+                        <audio controls autoplay style="width:100%;"><source src="${url}">متصفحك لا يدعم الصوت.</audio>
+                        <p style="margin-top:15px; font-size:0.9em;">${cleanFileName(name)}</p>
+                    </div>`;
             } else {
-                viewer.innerHTML = `<div style="text-align:center; padding:20px;">المعاينة غير متاحة لهذا الامتداد (${ext})، يمكنك تحميل الملف لمشاهدته.</div>`;
+                viewer.innerHTML = `
+                    <div style="text-align:center; padding:30px; background:var(--panel-bg); border-radius:20px;">
+                        <i class="fa-solid fa-file-zipper fa-5x" style="opacity:0.2; margin-bottom:20px;"></i>
+                        <h3>ملف غير قابل للمعاينة</h3>
+                        <p>ملفات ( .${ext} ) لا يمكن عرضها مباشرة. يرجى استخدام زر التحميل بالأعلى.</p>
+                    </div>`;
             }
         }
 
@@ -352,7 +355,6 @@
             handleSearchOrFilter();
         }
 
-        // عمليات الحذف والرفع والنقل (نفس المنطق السابق مع التأكد من التوكن)
         function openDeleteModal(e, name, sha) { e.stopPropagation(); deleteTarget = { name, sha }; document.getElementById('deleteMsg').innerText = cleanFileName(name); openModal('deleteModal'); }
         async function executeDelete() {
             const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${CONFIG.path}/${deleteTarget.name}`, {
