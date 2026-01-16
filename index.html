@@ -12,7 +12,7 @@
 
     <style>
         :root {
-            --primary-color: #064e3b; --accent-color: #c5a059; --bg-color: #f8fafc;        
+            --primary-color: #111111; --accent-color: #c5a059; --bg-color: #f8fafc;        
             --panel-bg: #ffffff; --border-color: #e2e8f0; --text-color: #1e293b;      
             --light-text: #64748b; --hover-bg: #f1f5f9; --glass-bg: rgba(255, 255, 255, 0.7);
             --shadow-elevation: 0 10px 25px rgba(0, 0, 0, 0.05);
@@ -177,9 +177,9 @@
                     <div class="separator"></div>
                     <i id="theme-icon" class="fa-solid fa-moon control-icon-btn" onclick="toggleTheme()"></i>
                 </div>
-                <h2 style="text-align:center; margin-top:20px; font-size:1.7em; color:#fff; position: relative; z-index: 2;">
+                <h2 style="text-align:center; margin-top:20px; font-size:1.5em; color:#fff; position: relative; z-index: 2; line-height: 1.4;">
                     مستعرض ملفات مدرسة تحفيظ القرآن بالبجادية 
-                    <br><span style="font-size: 0.8em; opacity: 0.9;"></span>
+                    <br><span style="font-size: 0.65em; opacity: 0.9; background: var(--accent-color); color: var(--primary-color); padding: 2px 12px; border-radius: 20px; font-weight: 800; display: inline-block; margin-top: 5px;">خاص بالمعلمين</span>
                 </h2>
             </div>
 
@@ -228,7 +228,7 @@
     </div>
 
     <script>
-        const CONFIG = { username: 'nmoschool', repo: 'Students', branch: 'main', path: 'files' };
+        const CONFIG = { username: 'nmoschool', repo: 'teacher', branch: 'main', path: 'files' };
         let allFiles = [], favorites = JSON.parse(localStorage.getItem('file_stars')) || [];
         let currentFolder = 'all', deleteTarget = null, renameTarget = null, moveTarget = null;
 
@@ -336,7 +336,6 @@
             const viewer = document.getElementById("viewer");
             const ext = name.split('.').pop().toLowerCase();
             
-            // مجموعات الامتدادات المحددة
             const docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'];
             const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp'];
             const vidExts = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
@@ -442,4 +441,3 @@
     </script>
 </body>
 </html>
-
