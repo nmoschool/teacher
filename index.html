@@ -150,7 +150,7 @@
     </div></div>
 
     <div id="moveModal" class="modal"><div class="modal-content">
-        <h3>نقل إلى مجلد</h3>
+        <h3>نقل إلى قسم</h3>
         <select id="moveFolderSelect" class="side-input">
             <option value="أول ابتدائي">أول ابتدائي</option>
             <option value="ثاني ابتدائي">ثاني ابتدائي</option>
@@ -158,8 +158,8 @@
             <option value="رابع ابتدائي">رابع ابتدائي</option>
             <option value="خامس ابتدائي">خامس ابتدائي</option>
             <option value="سادس ابتدائي">سادس ابتدائي</option>
-            <option value="الجداول الدراسية">الجداول الدراسية</option>
-            <option value="جداول الاختبارات">جداول الاختبارات</option>
+            <option value="جداول المعلمين">جداول المعلمين</option>
+            <option value="تعاميم">تعاميم</option>
             <option value="ملفات عامة">ملفات عامة</option>
         </select>
         <div style="display:flex; gap:10px; margin-top:20px;">
@@ -197,8 +197,8 @@
                     <div class="folder-item" onclick="filterByFolder('رابع ابتدائي')"><i class="fa-solid fa-folder"></i> رابع</div>
                     <div class="folder-item" onclick="filterByFolder('خامس ابتدائي')"><i class="fa-solid fa-folder"></i> خامس</div>
                     <div class="folder-item" onclick="filterByFolder('سادس ابتدائي')"><i class="fa-solid fa-folder"></i> سادس</div>
-                    <div class="folder-item folder-full" onclick="filterByFolder('الجداول الدراسية')"><i class="fa-solid fa-calendar-days"></i> الجداول الدراسية</div>
-                    <div class="folder-item folder-full" onclick="filterByFolder('جداول الاختبارات')"><i class="fa-solid fa-file-signature"></i> جداول الاختبارات</div>
+                    <div class="folder-item folder-full" onclick="filterByFolder('جداول المعلمين')"><i class="fa-solid fa-calendar-days"></i> جداول المعلمين</div>
+                    <div class="folder-item folder-full" onclick="filterByFolder('تعاميم')"><i class="fa-solid fa-file-signature"></i> تعاميم</div>
                     <div class="folder-item folder-full" onclick="filterByFolder('ملفات عامة')"><i class="fa-solid fa-folder"></i> ملفات عامة</div>
                 </div>
 
@@ -255,7 +255,6 @@
             if(t) { localStorage.setItem('github_token', t); location.reload(); }
         }
 
-        // دالة تنظيف منطقة العرض
         function resetViewer() {
             document.getElementById("current-file-name").innerText = "يرجى اختيار ملف";
             document.getElementById("download-btn").style.display = "none";
@@ -287,8 +286,13 @@
 
         function filterByFolder(folder) { 
             currentFolder = folder; 
-            resetViewer(); // تنظيف العرض عند تغيير المجلد
+            resetViewer();
             handleSearchOrFilter(); 
+            // تحديد الزر النشط بصرياً
+            document.querySelectorAll('.folder-item').forEach(item => {
+                if(item.innerText.includes(folder)) item.classList.add('active');
+                else item.classList.remove('active');
+            });
         }
 
         function handleSearchOrFilter() {
@@ -315,9 +319,9 @@
                     <div class="row-actions">
                         <i class="fa-solid fa-star" style="color:${isStarred ? 'var(--accent-color)' : '#cbd5e1'}" onclick="toggleStar(event, '${file.name}')"></i>
                         ${isAdmin() ? `
-                            <i class="fa-solid fa-folder-plus" style="color:var(--accent-color)" onclick="openMoveModal(event, ${JSON.stringify(file).replace(/"/g, '&quot;')})"></i>
-                            <i class="fa-solid fa-pen-to-square" style="color:var(--accent-color)" onclick="openRenameModal(event, ${JSON.stringify(file).replace(/"/g, '&quot;')})"></i>
-                            <i class="fa-solid fa-trash" style="color:#ef4444;" onclick="openDeleteModal(event, '${file.name}', '${file.sha}')"></i>
+                            <i class="fa-solid fa-folder-plus" title="نقل لقسم آخر" style="color:var(--accent-color)" onclick="openMoveModal(event, ${JSON.stringify(file).replace(/"/g, '&quot;')})"></i>
+                            <i class="fa-solid fa-pen-to-square" title="تعديل الاسم" style="color:var(--accent-color)" onclick="openRenameModal(event, ${JSON.stringify(file).replace(/"/g, '&quot;')})"></i>
+                            <i class="fa-solid fa-trash" title="حذف" style="color:#ef4444;" onclick="openDeleteModal(event, '${file.name}', '${file.sha}')"></i>
                         ` : ''}
                     </div>`;
                 div.onclick = (e) => {
