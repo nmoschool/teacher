@@ -52,7 +52,7 @@
         .control-icon-btn { cursor: pointer; transition: 0.3s; font-size: 1.1em; color: var(--accent-color); }
         .separator { width: 1px; height: 15px; background: var(--accent-color); opacity: 0.3; }
 
-        .admin-controls { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .admin-controls { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 
         .side-input {
             width: 100%; padding: 12px 15px; border: 1px solid var(--border-color);
@@ -72,7 +72,7 @@
         .folder-full { grid-column: span 2; }
 
         .upload-btn {
-            width: 100%; padding: 15px; border: none; border-radius: 15px;
+            width: 100%; padding: 13px; border: none; border-radius: 15px;
             cursor: pointer; font-weight: bold; font-family: inherit;
             background: linear-gradient(135deg, var(--accent-color), #a38145);
             color: white; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
@@ -132,6 +132,17 @@
         </div>
     </div></div>
 
+    <div id="linkModal" class="modal"><div class="modal-content">
+        <div style="font-size: 3em; color: var(--accent-color); margin-bottom: 15px;"><i class="fa-solid fa-link"></i></div>
+        <h3>إضافة رابط تعليمي جديد</h3>
+        <input type="text" id="linkNameInput" class="side-input" placeholder="اسم الرابط (مثال: بوابة عين)" style="margin-bottom: 10px;">
+        <input type="url" id="linkUrlInput" class="side-input" placeholder="الصق الرابط هنا (https://...)" style="text-align:left; direction:ltr;">
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="upload-btn" onclick="executeAddLink()" style="display:block; flex:1;">حفظ الرابط</button>
+            <button class="side-input" onclick="closeModal('linkModal')" style="flex:1;">إلغاء</button>
+        </div>
+    </div></div>
+
     <div id="deleteModal" class="modal"><div class="modal-content">
         <i class="fa-solid fa-circle-exclamation fa-4x" style="color:#ef4444; margin-bottom:15px;"></i>
         <h3>تأكيد الحذف؟</h3>
@@ -160,6 +171,7 @@
             <option value="سادس ابتدائي">سادس ابتدائي</option>
             <option value="جداول المعلمين">جداول المعلمين</option>
             <option value="تعاميم">تعاميم</option>
+            <option value="روابط تعليمية">روابط تعليمية</option>
             <option value="ملفات عامة">ملفات عامة</option>
         </select>
         <div style="display:flex; gap:10px; margin-top:20px;">
@@ -184,9 +196,14 @@
             </div>
 
             <div class="admin-controls">
-                <button class="upload-btn" id="btn-upload" onclick="document.getElementById('upload-input').click()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> رفع ملف جديد
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="upload-btn" id="btn-upload" onclick="document.getElementById('upload-input').click()" style="flex:1;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> رفع ملف
+                    </button>
+                    <button class="upload-btn" id="btn-add-link" onclick="openModal('linkModal')" style="flex:1; background: #2d3436;">
+                        <i class="fa-solid fa-link"></i> إضافة رابط
+                    </button>
+                </div>
                 <input type="file" id="upload-input" style="display:none;">
                 <input type="text" id="search-input" class="side-input" placeholder="🔍 ابحث في الملفات..." oninput="handleSearchOrFilter()">
                 
@@ -198,8 +215,8 @@
                     <div class="folder-item" onclick="filterByFolder('خامس ابتدائي')"><i class="fa-solid fa-folder"></i> خامس</div>
                     <div class="folder-item" onclick="filterByFolder('سادس ابتدائي')"><i class="fa-solid fa-folder"></i> سادس</div>
                     <div class="folder-item folder-full" onclick="filterByFolder('جداول المعلمين')"><i class="fa-solid fa-calendar-days"></i> جداول المعلمين</div>
+                    <div class="folder-item folder-full" onclick="filterByFolder('روابط تعليمية')"><i class="fa-solid fa-earth-americas"></i> روابط تعليمية</div>
                     <div class="folder-item folder-full" onclick="filterByFolder('تعاميم')"><i class="fa-solid fa-file-signature"></i> تعاميم</div>
-                    <div class="folder-item folder-full" onclick="filterByFolder('ملفات عامة')"><i class="fa-solid fa-folder"></i> ملفات عامة</div>
                 </div>
 
                 <select id="file-filter" class="side-input" onchange="handleSearchOrFilter()">
@@ -271,6 +288,7 @@
             if(isAdmin()) {
                 document.getElementById('admin-icon').classList.replace('fa-user-shield', 'fa-unlock-keyhole');
                 document.getElementById('btn-upload').style.display = 'flex';
+                document.getElementById('btn-add-link').style.display = 'flex';
             }
             const list = document.getElementById("file-list");
             list.innerHTML = '<center style="padding:20px;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</center>';
@@ -288,7 +306,6 @@
             currentFolder = folder; 
             resetViewer();
             handleSearchOrFilter(); 
-            // تحديد الزر النشط بصرياً
             document.querySelectorAll('.folder-item').forEach(item => {
                 if(item.innerText.includes(folder)) item.classList.add('active');
                 else item.classList.remove('active');
@@ -305,17 +322,18 @@
             renderList(filtered);
         }
 
-        function cleanFileName(name) { return name.replace(/\[.*?\]\s*/g, ''); }
+        function cleanFileName(name) { return name.replace(/\[.*?\]\s*/g, '').replace('.url', ''); }
 
         function renderList(files) {
             const list = document.getElementById("file-list");
             list.innerHTML = '';
             files.forEach(file => {
                 const isStarred = favorites.includes(file.name);
+                const isLink = file.name.endsWith('.url');
                 const div = document.createElement("div");
                 div.className = "file-row";
                 div.innerHTML = `
-                    <div class="file-info"><span class="name">${cleanFileName(file.name)}</span></div>
+                    <div class="file-info"><span class="name">${isLink ? '🔗 ' : ''}${cleanFileName(file.name)}</span></div>
                     <div class="row-actions">
                         <i class="fa-solid fa-star" style="color:${isStarred ? 'var(--accent-color)' : '#cbd5e1'}" onclick="toggleStar(event, '${file.name}')"></i>
                         ${isAdmin() ? `
@@ -333,7 +351,17 @@
             });
         }
 
-        function openFile(name, url) {
+        async function openFile(name, url) {
+            // إذا كان الملف رابطاً تعليمياً
+            if (name.endsWith('.url')) {
+                try {
+                    const response = await fetch(url);
+                    const actualUrl = await response.text();
+                    window.open(actualUrl.trim(), '_blank');
+                    return;
+                } catch (e) { console.error("Error opening link"); }
+            }
+
             document.getElementById("current-file-name").innerText = cleanFileName(name);
             document.getElementById("download-btn").style.display = "inline-flex";
             document.getElementById("download-btn").href = url;
@@ -373,6 +401,29 @@
                         <a href="${url}" target="_blank" style="display:inline-block; background:var(--accent-color); color:white; padding:10px 20px; border-radius:10px; text-decoration:none; margin-top:10px;">تحميل الملف الآن</a>
                     </div>`;
             }
+        }
+
+        async function executeAddLink() {
+            const name = document.getElementById('linkNameInput').value.trim();
+            const url = document.getElementById('linkUrlInput').value.trim();
+            if(!name || !url) { alert("يرجى تعبئة جميع الحقول"); return; }
+
+            const fileName = `[روابط تعليمية] ${name}.url`;
+            const content = btoa(url); 
+            const status = document.getElementById('upload-status');
+            status.innerHTML = '⏳ جاري الحفظ...';
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${CONFIG.path}/${fileName}`, {
+                    method: 'PUT', headers: { 'Authorization': `token ${getStoredToken()}` },
+                    body: JSON.stringify({ message: `Add Link`, content, branch: CONFIG.branch })
+                });
+                if (res.ok) { 
+                    status.innerHTML = "✅ تم الإضافة"; 
+                    closeModal('linkModal'); 
+                    loadFromGithub(); 
+                }
+            } catch (e) { status.innerHTML = "❌ خطأ في الاتصال"; }
         }
 
         function toggleStar(e, name) {
